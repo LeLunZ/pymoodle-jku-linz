@@ -8,7 +8,7 @@ setup(
   author = 'LeLunZ',
   author_email = 'l.accounts@pm.me',
   url = 'https://github.com/LeLunZ/pymoodle-jku-linz',
-  download_url = 'https://github.com/LeLunZ/pymoodle-jku-linz/archive/0.1.0.tar.gz',
+  download_url = 'https://github.com/LeLunZ/pymoodle-jku-linz/archive/0.1.1.tar.gz',
   keywords = ['moodle', 'jku', 'linz', 'jku linz'],
   install_requires=[
           'pytube',
