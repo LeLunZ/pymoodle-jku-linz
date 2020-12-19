@@ -16,8 +16,8 @@ from lxml import html
 from urllib3 import Retry
 from pytube import YouTube
 
-from Classes.course import Course
-from Classes.course_data import UrlType, Url, CourseData
+from pymoodle_jku.Classes.course import Course
+from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
 
 
 def requests_retry_session(

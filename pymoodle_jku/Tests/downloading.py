@@ -5,8 +5,8 @@ from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from Classes.course_data import UrlType, Url
-from Client.client import MoodleClient
+from pymoodle_jku.Classes.course_data import UrlType, Url
+from pymoodle_jku.Client.client import MoodleClient
 
 if __name__ == "__main__":
     links_dict = {}
