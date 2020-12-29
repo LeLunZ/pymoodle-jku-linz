@@ -1,19 +1,23 @@
 from distutils.core import setup
 from pathlib import Path
 
-this_directory = Path(__file__).absolute().parent
-with open((this_directory / 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+try:
+    this_directory = Path(__file__).absolute().parent
+    with open((this_directory / 'README.md'), encoding='utf-8') as f:
+        long_description = f.read()
+except FileNotFoundError:
+    long_description = ''
+
 setup(
     name='pymoodle-jku',
     packages=['pymoodle_jku', 'pymoodle_jku.Classes', 'pymoodle_jku.Client'],
-    version='0.1.4',
+    version='0.1.5',
     license='BSD 3-Clause',
     description='A client for the moodle page of https://www.jku.at',
     author='LeLunZ',
     author_email='l.accounts@pm.me',
     url='https://github.com/LeLunZ/pymoodle-jku-linz',
-    download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/0.1.4.tar.gz',
+    download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/0.1.5.tar.gz',
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
     install_requires=[
         'pytube',
