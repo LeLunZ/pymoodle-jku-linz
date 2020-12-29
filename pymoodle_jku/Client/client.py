@@ -139,6 +139,8 @@ class MoodleClient:
                         UrlType[i.getparent().xpath('./@href')[0].split('/')[-2].capitalize()])
                     for i in all_url_imgs]
             r.data = CourseData(urls, sections)
+            for l in r.data.links:
+                l.course = r.data
 
         futures = [
             self.future_session.get(url if type(url) is str else url.viewurl, timeout=5, hooks={'response': processing})
