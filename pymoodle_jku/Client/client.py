@@ -189,8 +189,6 @@ class MoodleClient:
                                data={'id': l.link.split('id=')[1].split('&')[0],
                                      'sesskey': self.sesskey})
         elif l.type is UrlType.Streamurl:
-            if l.course.path is None and l.path is None:
-                return None
             if client is self.session:
                 return self._download_stream(l)
             return self.future_session.executor.submit(self._download_stream, l)
