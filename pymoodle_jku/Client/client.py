@@ -67,7 +67,7 @@ class MoodleClient:
         response = self.session.get('https://moodle.jku.at/jku/login/index.php')
         headers = {'Content-type': 'application/x-www-form-urlencoded'}
         url = response.url
-        session_id = url.split('jsessionid=')[1].split('?')[0]
+        # session_id = url.split('jsessionid=')[1].split('?')[0]
         response = self.session.post(url, data={'j_username': username, 'j_password': password,
                                                 '_eventId_proceed': 'Login'}, headers=headers)
         tree = html.fromstring(response.content.decode('utf-8'))
@@ -161,22 +161,25 @@ class MoodleClient:
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
         link = video.get('src')
         url = link
-        tf = NamedTemporaryFile(delete=False, suffix='.mp4')
+        tf = NamedTemporaryFile(suffix='.mp4')
         tf.close()
         process = subprocess.Popen(
             ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
              url,
              '-c', 'copy',
-             tf.name],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL)
+             tf.name])
         if process.poll() is None: # just press y for the whole time to accept everything we get asked (secure? no.)
+            process.communicate('y\n')
+            process.communicate('y\n')
             process.communicate('y\n')
         return_code = process.wait(timeout=10 * 60)
         if return_code != 0:
             raise Exception('File could not be downloaded')
             # or return False?
-        return tf
+        with open(tf.name, 'rb') as fh:
+            buf = BytesIO(fh.read())
+        Path(tf.name).unlink() # Delete NamedTemporaryFile
+        return buf
 
     def _download(self, client, l):
         if l.type is UrlType.Resource:
@@ -262,8 +265,3 @@ class MoodleClient:
         self.future_session = requests_retry_session_async(session=self.session, executor=pool_executor)
         self.future_session.hooks['response'].append(self.check_request)
         self.sesskey = None
-        self.tempdir = Path('./.temp')
-        try:
-            self.tempdir.mkdir()
-        except:
-            pass
