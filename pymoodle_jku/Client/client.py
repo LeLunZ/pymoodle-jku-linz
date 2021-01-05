@@ -1,5 +1,6 @@
 import json
 import subprocess
+import time
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
@@ -144,7 +145,9 @@ class MoodleClient:
 
         futures = [
             self.future_session.get(url if type(url) is str else url.viewurl, timeout=5,
-                                    hooks={'response': lambda r, *args, **kwargs: processing(r, args, kwargs, url if type(url) is Course else None)})
+                                    hooks={'response': lambda r, *args, **kwargs: processing(r, args, kwargs,
+                                                                                             url if type(
+                                                                                                 url) is Course else None)})
             for
             url
             in urls]
@@ -177,6 +180,7 @@ class MoodleClient:
         if return_code != 0:
             raise Exception('File could not be downloaded')
             # or return False?
+        time.sleep(0.5)
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
             buf.name = tf.name
@@ -258,7 +262,8 @@ class MoodleClient:
             raise Exception('Please login.')
         return r
 
-    def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=8), download_path=None):
+    def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=4), download_path=None):
+        # limiting max_workers to 4 because of the large downloads
         self.session = requests_retry_session()
         self.download_path = download_path
         self.session.hooks['response'].append(self.check_request)
