@@ -122,14 +122,14 @@ class MoodleClient:
         body = self.course_pure(url)
         main_region = body.xpath('.//div[@id=$name]', name='region-main-box')[0]
         sections = main_region.xpath('.//ul[@class=$name]/li', name='topics')
-        cd = CourseData(self.urls_from_page(main_region), sections)
+        cd = CourseData(url if type(url) is Course else None, self.urls_from_page(main_region), sections)
         for l in cd.links:
             l.course = cd
         return cd
 
     def courses(self, urls: [str, Course]) -> Generator[Union[CourseData, None], None, None]:
 
-        def processing(r, *args, **kwargs):
+        def processing(r, args, kwargs, course):
             tree = html.fromstring(r.content.decode('utf-8'))
             body = tree.xpath('//body')[0]
             main_region = body.xpath('.//div[@id=$name]', name='region-main-box')[0]
@@ -138,12 +138,13 @@ class MoodleClient:
             urls = [Url(i.getparent().xpath('./@href')[0],
                         UrlType[i.getparent().xpath('./@href')[0].split('/')[-2].capitalize()])
                     for i in all_url_imgs]
-            r.data = CourseData(urls, sections)
+            r.data = CourseData(course, urls, sections)
             for l in r.data.links:
                 l.course = r.data
 
         futures = [
-            self.future_session.get(url if type(url) is str else url.viewurl, timeout=5, hooks={'response': processing})
+            self.future_session.get(url if type(url) is str else url.viewurl, timeout=5,
+                                    hooks={'response': lambda r, *args, **kwargs: processing(r, args, kwargs, url if type(url) is Course else None)})
             for
             url
             in urls]
@@ -168,7 +169,7 @@ class MoodleClient:
              url,
              '-c', 'copy',
              tf.name])
-        if process.poll() is None: # just press y for the whole time to accept everything we get asked (secure? no.)
+        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
             process.communicate('y\n')
             process.communicate('y\n')
             process.communicate('y\n')
@@ -178,7 +179,7 @@ class MoodleClient:
             # or return False?
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
-        Path(tf.name).unlink() # Delete NamedTemporaryFile
+        Path(tf.name).unlink()  # Delete NamedTemporaryFile
         return buf
 
     def _download(self, client, l):

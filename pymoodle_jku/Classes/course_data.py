@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
+from pymoodle_jku.Classes.course import Course
+
 
 class UrlType(Enum):
     Streamurl = 0  # stream
@@ -23,7 +25,6 @@ class Url:
     link: str
     type: UrlType
     course: 'CourseData' = None
-    path: Path = None
 
 
 @dataclass
@@ -33,6 +34,6 @@ class Section:
 
 @dataclass
 class CourseData:
+    course: Course = None
     links: [Url] = field(default_factory=lambda: [])
     sections: [Section] = field(default_factory=lambda: [])
-    path: Path = None
