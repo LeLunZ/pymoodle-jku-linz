@@ -179,6 +179,7 @@ class MoodleClient:
             # or return False?
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
+            buf.name = tf.name
         Path(tf.name).unlink()  # Delete NamedTemporaryFile
         return buf
 
