@@ -144,14 +144,12 @@ class MoodleClient:
             for l in r.data.links:
                 l.course = r.data
 
+        def prepare_hook(course):
+            return lambda r, *args, **kwargs: processing(r, args, kwargs, course if type(course) is Course else None)
+
         futures = [
             self.future_session.get(url if type(url) is str else url.viewurl, timeout=5,
-                                    hooks={'response': lambda r, *args, **kwargs: processing(r, args, kwargs,
-                                                                                             url if type(
-                                                                                                 url) is Course else None)})
-            for
-            url
-            in urls]
+                                    hooks={'response': prepare_hook(url)}) for url in urls]
         for cd in as_completed(futures):
             try:
                 result = cd.result()
