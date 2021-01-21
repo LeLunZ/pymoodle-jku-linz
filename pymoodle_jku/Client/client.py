@@ -256,10 +256,10 @@ class MoodleClient:
             else:
                 return self._download(self.session, Url(data, UrlType.Url))
 
-    def calendar(self):
+    def calendar(self, limit=26):
         url = f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_calendar_get_action_events_by_timesort'
         data = [{"index": 0, "methodname": "core_calendar_get_action_events_by_timesort",
-                 "args": {"limitnum": 26, "timesortfrom": 1609801200, "limittononsuspendedevents": True}}]
+                 "args": {"limitnum": limit, "timesortfrom": int(time.time()), "limittononsuspendedevents": True}}]
         response = self.session.post(url, json=data)
         return response.json()
 
@@ -277,6 +277,3 @@ class MoodleClient:
         self.future_session = requests_retry_session_async(session=self.session, executor=pool_executor)
         self.future_session.hooks['response'].append(self.check_request)
         self.sesskey = None
-
-# https://moodle.jku.at/jku/lib/ajax/service.php?sesskey=Xf5VkJS2K6&info=core_calendar_get_action_events_by_timesort
-# [{"index":0,"methodname":"core_calendar_get_action_events_by_timesort","args":{"limitnum":26,"timesortfrom":1609801200,"limittononsuspendedevents":true}}]
