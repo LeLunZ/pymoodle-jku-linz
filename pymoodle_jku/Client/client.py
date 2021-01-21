@@ -178,7 +178,7 @@ class MoodleClient:
             process.communicate('y\n')
         return_code = process.wait(timeout=10 * 60)
         if return_code != 0:
-            raise Exception('File could not be downloaded')
+            return None
             # or return False?
         time.sleep(0.5)
         with open(tf.name, 'rb') as fh:
@@ -230,7 +230,7 @@ class MoodleClient:
             if len(highest_res_stream) == 0:
                 highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
                 if len(highest_res_stream) == 0:
-                    return False
+                    return None
             download_obj = highest_res_stream.order_by('fps')[-1]
             buffer = BytesIO()
             download_obj.stream_to_buffer(buffer=buffer)
@@ -243,7 +243,7 @@ class MoodleClient:
                 return file
             else:
                 response.close()
-                return False
+                return None
 
     def download(self, data: Union[list, str, Url]) -> Union[list, Response, BytesIO, StringIO]:
         try:
