@@ -183,8 +183,9 @@ class MoodleClient:
         time.sleep(0.5)
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
-            buf.name = tf.name
+            buf.name = Path(tf.name).name
         Path(tf.name).unlink()  # Delete NamedTemporaryFile
+        del tf
         return buf
 
     def _download(self, client, l):
