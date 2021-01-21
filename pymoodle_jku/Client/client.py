@@ -183,7 +183,7 @@ class MoodleClient:
         time.sleep(0.5)
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
-            buf.name = Path(tf.name).name
+            buf.name = Path(url).name
         Path(tf.name).unlink()  # Delete NamedTemporaryFile
         del tf
         return buf
