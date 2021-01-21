@@ -217,10 +217,10 @@ class MoodleClient:
     def _download_from_url(self, l: Url):
         p = Path(l.link)
         link = l.link
-        if '&' in p.name and '=' in p.name:  # doing this for moodle download
-            link += '&forcedownload=1'  # normally every other server ignores this
+        if '?' in p.name and '=' in p.name:  # doing this for moodle download
+            link += '&forcedownload=1&redirect=1'  # normally every other server ignores this
         else:
-            link += '?forcedownload=1'
+            link += '?forcedownload=1&redirect=1'
         response = self.session.get(link, stream=True)
         if response.url.startswith('https://www.youtube.com/watch') or response.url.startswith(
                 'youtube.com/watch') or response.url.startswith('https://youtube.com/watch'):
