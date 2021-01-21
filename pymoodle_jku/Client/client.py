@@ -1,6 +1,7 @@
 import json
 import subprocess
 import time
+from urllib.parse import unquote
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
@@ -183,7 +184,8 @@ class MoodleClient:
         time.sleep(0.5)
         with open(tf.name, 'rb') as fh:
             buf = BytesIO(fh.read())
-            buf.name = Path(url).name
+
+            buf.name = Path(unquote(url)).name
         Path(tf.name).unlink()  # Delete NamedTemporaryFile
         del tf
         return buf
