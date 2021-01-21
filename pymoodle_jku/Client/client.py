@@ -175,7 +175,7 @@ class MoodleClient:
             process.communicate('y\n')
             process.communicate('y\n')
             process.communicate('y\n')
-        return_code = process.wait(timeout=10 * 60)
+        return_code = process.wait(timeout=30 * 60)
         if return_code != 0:
             return None
             # or return False?
