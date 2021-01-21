@@ -13,6 +13,7 @@ if __name__ == "__main__":
     # download everything you can
     client = MoodleClient()
     client.login(input('username: '), input('password:'))
+    cal = client.calendar()
     stream = client._download_stream(Url('https://moodle.jku.at/jku/mod/streamurl/view.php?id=4431710', UrlType.Streamurl))
     res = client.download(Url('https://moodle.jku.at/jku/pluginfile.php/4849684/mod_resource/content/1/IMG_20201026_194952.jpg', UrlType.Url))
     courses = client.courses_overview()

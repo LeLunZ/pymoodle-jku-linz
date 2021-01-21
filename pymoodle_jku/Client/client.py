@@ -256,6 +256,13 @@ class MoodleClient:
             else:
                 return self._download(self.session, Url(data, UrlType.Url))
 
+    def calendar(self):
+        url = f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_calendar_get_action_events_by_timesort'
+        data = [{"index": 0, "methodname": "core_calendar_get_action_events_by_timesort",
+                 "args": {"limitnum": 26, "timesortfrom": 1609801200, "limittononsuspendedevents": True}}]
+        response = self.session.post(url, json=data)
+        return response.json()
+
     @staticmethod
     def check_request(r, *args, **kwargs):
         if ('enroll' in r.url and 'enroll' not in r.request.url) or ('login' in r.url and 'login' not in r.request.url):
@@ -270,3 +277,6 @@ class MoodleClient:
         self.future_session = requests_retry_session_async(session=self.session, executor=pool_executor)
         self.future_session.hooks['response'].append(self.check_request)
         self.sesskey = None
+
+# https://moodle.jku.at/jku/lib/ajax/service.php?sesskey=Xf5VkJS2K6&info=core_calendar_get_action_events_by_timesort
+# [{"index":0,"methodname":"core_calendar_get_action_events_by_timesort","args":{"limitnum":26,"timesortfrom":1609801200,"limittononsuspendedevents":true}}]
