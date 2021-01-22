@@ -16,7 +16,7 @@ from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from lxml import html
 from urllib3 import Retry
-from pytube import YouTube, Stream
+from pytube import YouTube
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
@@ -227,12 +227,16 @@ class MoodleClient:
                 'youtube.com/watch') or response.url.startswith('https://youtube.com/watch'):
             youtube = YouTube(response.url)
             response.close()
-            highest_res_stream = youtube.streams.filter(resolution='1080p', progressive=True, file_extension='mp4')
+            highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
             if len(highest_res_stream) == 0:
-                highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
-                if len(highest_res_stream) == 0:
+                highest_res_stream = youtube.streams.filter(progressive=True, file_extension='mp4').order_by(
+                    'resolution').desc()
+                if len(highest_res_stream) != 0:
+                    download_obj = highest_res_stream[0]
+                else:
                     return None
-            download_obj = highest_res_stream.order_by('fps')[-1]
+            else:
+                download_obj = highest_res_stream.order_by('fps')[-1]
 
             buffer = BytesIO()
             download_obj.stream_to_buffer(buffer=buffer)
@@ -253,7 +257,11 @@ class MoodleClient:
         try:
             futures = [d for l in data if (d := self._download(self.future_session, l)) is not None]
             for d in as_completed(futures):
-                yield d.result()
+                try:
+                    result = d.result()
+                    yield result
+                except:
+                    pass
         except TypeError:
             if type(data) is Url:
                 return self._download(self.session, data)
