@@ -236,6 +236,7 @@ class MoodleClient:
 
             buffer = BytesIO()
             download_obj.stream_to_buffer(buffer=buffer)
+            buffer.seek(0)
             buffer.name = download_obj.default_filename
             return buffer
         else:
