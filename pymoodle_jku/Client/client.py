@@ -16,7 +16,7 @@ from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from lxml import html
 from urllib3 import Retry
-from pytube import YouTube
+from pytube import YouTube, Stream
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
@@ -233,8 +233,10 @@ class MoodleClient:
                 if len(highest_res_stream) == 0:
                     return None
             download_obj = highest_res_stream.order_by('fps')[-1]
+
             buffer = BytesIO()
             download_obj.stream_to_buffer(buffer=buffer)
+            buffer.name = download_obj.default_filename
             return buffer
         else:
             if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
