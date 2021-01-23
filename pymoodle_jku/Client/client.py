@@ -97,7 +97,8 @@ class DownloadManager:
         elif l.type is UrlType.Url:
             return self.client.future_session.executor.submit(self.download_from_url, l)
         else:
-            return None
+            # return true because we don't want to try to download again.
+            return (True, l.link)
 
     def download(self):
         futures = [d for l in self.urls if (d := self._download(l)) is not None]
