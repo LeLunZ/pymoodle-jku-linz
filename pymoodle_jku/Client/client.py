@@ -16,7 +16,7 @@ from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from lxml import html
 from urllib3 import Retry
-from pytube import YouTube
+from pytube import YouTube, Stream
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
@@ -59,6 +59,121 @@ def requests_retry_session_async(
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
+
+
+class DownloadManager:
+    def __init__(self, urls, client: 'MoodleClient', path):
+        self.urls = urls
+        self.failed = []
+        self.done = []
+        self.client = client
+        self.path = Path(path)
+
+    def get_request(self, url):
+        response = self.client.session.get(url, stream=True)
+        return self.process_response(url, response)
+
+    def post_request(self, url):
+        response = self.client.session.post('https://moodle.jku.at/jku/mod/folder/download_folder.php',
+                                            data={'id': url.split('id=')[1].split('&')[0],
+                                                  'sesskey': self.client.sesskey}, stream=True)
+        return self.process_response(url, response)
+
+    def _download(self, l):
+        if l.type is UrlType.Resource:
+            return self.client.future_session.executor.submit(self.get_request, l.link)
+        elif l.type is UrlType.Folder:
+            return self.client.future_session.executor.submit(self.post_request, l.link)
+        elif l.type is UrlType.Streamurl:
+            return self.client.future_session.executor.submit(self._download_stream, l)
+        elif l.type is UrlType.Url:
+            return self.client.future_session.executor.submit(self.download_from_url, l)
+        else:
+            return None
+
+    def download(self):
+        futures = [d for l in self.urls if (d := self._download(l)) is not None]
+        for f in as_completed(futures):
+            try:
+                done, url = f.result()
+                if done:
+                    self.done.append(url)
+                else:
+                    self.failed.append(url)
+            except:
+                pass
+
+    def download_from_url(self, url):
+        p = Path(url)
+        link = url
+        if '?' in p.name and '=' in p.name:  # doing this for moodle download
+            link += '&forcedownload=1&redirect=1'  # normally every other server ignores this
+        else:
+            link += '?forcedownload=1&redirect=1'
+        response = self.client.session.get(link, stream=True)
+        if response.url.startswith('https://www.youtube.com/watch') or response.url.startswith(
+                'youtube.com/watch') or response.url.startswith('https://youtube.com/watch'):
+            youtube = YouTube(response.url)
+            response.close()
+            highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
+            if len(highest_res_stream) == 0:
+                highest_res_stream = youtube.streams.filter(progressive=True, file_extension='mp4').order_by(
+                    'resolution').desc()
+                if len(highest_res_stream) != 0:
+                    download_obj = highest_res_stream[0]
+                else:
+                    return False, url
+            else:
+                download_obj = highest_res_stream.order_by('fps')[-1]
+
+            filename = download_obj.default_filename
+            download_obj.download(output_path=self.path, filename=filename)
+            return True, url
+        else:
+            return self.process_response(url, response)
+
+    def process_response(self, url, response):
+        if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
+            filename = cnt_dis.split('filename="')[1][:-1]
+            size = 1024 * 1024 * 10
+            chunk = next(response.iter_content(chunk_size=size))
+            try:
+                data = chunk.decode()
+                m = 'w'
+            except (UnicodeDecodeError, AttributeError):
+                m = 'wb'
+                data = chunk
+            with open(self.path / filename, m) as file:
+                file.write(data)
+                for chunk in response.iter_content(chunk_size=size):
+                    file.write(chunk)
+            del data
+            return True, url
+        else:
+            response.close()
+            return False, url
+
+    def _download_stream(self, l: Url):
+        response = self.client.session.get(l.link)
+        tree = html.fromstring(response.content.decode('utf-8'))
+        video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
+        link = video.get('src')
+        url = link
+        process = subprocess.Popen(
+            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
+             url,
+             '-c', 'copy',
+             (self.path.absolute() / Path(unquote(url)).name)])
+        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
+            process.communicate('y\n')
+            process.communicate('y\n')
+            process.communicate('y\n')
+        return_code = process.wait(timeout=30 * 60)
+        if return_code != 0:
+            return False, l.link
+            # or return False?
+        time.sleep(0.5)
+        return True, l.link
 
 
 class MoodleClient:
@@ -157,116 +272,6 @@ class MoodleClient:
             except Exception as e:
                 # dont yield anything
                 pass
-
-    def _download_stream(self, l: Url):
-        response = self.session.get(l.link)
-        tree = html.fromstring(response.content.decode('utf-8'))
-        video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
-        link = video.get('src')
-        url = link
-        tf = NamedTemporaryFile(suffix='.mp4')
-        tf.close()
-        process = subprocess.Popen(
-            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
-             url,
-             '-c', 'copy',
-             tf.name])
-        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
-            process.communicate('y\n')
-            process.communicate('y\n')
-            process.communicate('y\n')
-        return_code = process.wait(timeout=30 * 60)
-        if return_code != 0:
-            return None
-            # or return False?
-        time.sleep(0.5)
-        with open(tf.name, 'rb') as fh:
-            buf = BytesIO(fh.read())
-
-            buf.name = Path(unquote(url)).name
-        Path(tf.name).unlink()  # Delete NamedTemporaryFile
-        del tf
-        return buf
-
-    def _download(self, client, l):
-        if l.type is UrlType.Resource:
-            return client.get(l.link)
-        elif l.type is UrlType.Folder:
-            return client.post('https://moodle.jku.at/jku/mod/folder/download_folder.php',
-                               data={'id': l.link.split('id=')[1].split('&')[0],
-                                     'sesskey': self.sesskey})
-        elif l.type is UrlType.Streamurl:
-            if client is self.session:
-                return self._download_stream(l)
-            return self.future_session.executor.submit(self._download_stream, l)
-        elif l.type is UrlType.Url:
-            if client is self.session:
-                return self._download_from_url(l)
-            return self.future_session.executor.submit(self._download_from_url, l)
-        else:
-            return None
-
-    def _save_response(self, resp: Response):
-        try:
-            data = resp.content.decode()
-            file = StringIO(data)
-        except (UnicodeDecodeError, AttributeError):
-            file = BytesIO(resp.content)
-        resp.close()
-        return file
-
-    def _download_from_url(self, l: Url):
-        p = Path(l.link)
-        link = l.link
-        if '?' in p.name and '=' in p.name:  # doing this for moodle download
-            link += '&forcedownload=1&redirect=1'  # normally every other server ignores this
-        else:
-            link += '?forcedownload=1&redirect=1'
-        response = self.session.get(link, stream=True)
-        if response.url.startswith('https://www.youtube.com/watch') or response.url.startswith(
-                'youtube.com/watch') or response.url.startswith('https://youtube.com/watch'):
-            youtube = YouTube(response.url)
-            response.close()
-            highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
-            if len(highest_res_stream) == 0:
-                highest_res_stream = youtube.streams.filter(progressive=True, file_extension='mp4').order_by(
-                    'resolution').desc()
-                if len(highest_res_stream) != 0:
-                    download_obj = highest_res_stream[0]
-                else:
-                    return None
-            else:
-                download_obj = highest_res_stream.order_by('fps')[-1]
-
-            buffer = BytesIO()
-            download_obj.stream_to_buffer(buffer=buffer)
-            buffer.seek(0)
-            buffer.name = download_obj.default_filename
-            return buffer
-        else:
-            if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
-                filename = cnt_dis.split('filename="')[1][:-1]
-                file = self._save_response(response)
-                file.name = filename
-                return file
-            else:
-                response.close()
-                return None
-
-    def download(self, data: Union[list, str, Url]) -> Union[list, Response, BytesIO, StringIO]:
-        try:
-            futures = [d for l in data if (d := self._download(self.future_session, l)) is not None]
-            for d in as_completed(futures):
-                try:
-                    result = d.result()
-                    yield result
-                except:
-                    pass
-        except TypeError:
-            if type(data) is Url:
-                return self._download(self.session, data)
-            else:
-                return self._download(self.session, Url(data, UrlType.Url))
 
     def calendar(self, limit=26):
         url = f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_calendar_get_action_events_by_timesort'
