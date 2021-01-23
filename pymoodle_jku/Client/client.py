@@ -9,6 +9,7 @@ from io import BytesIO, StringIO
 from tempfile import NamedTemporaryFile
 from typing import Union, Generator
 
+import iouuid
 import requests
 from requests import Response
 from requests.adapters import HTTPAdapter
@@ -127,6 +128,7 @@ class DownloadManager:
                 download_obj = highest_res_stream.order_by('fps')[-1]
 
             filename = download_obj.default_filename
+            filename = iouuid.generate_id(self.path / filename, size=2)
             download_obj.download(output_path=self.path, filename=filename)
             return True, url
         else:
@@ -143,6 +145,7 @@ class DownloadManager:
             except (UnicodeDecodeError, AttributeError):
                 m = 'wb'
                 data = chunk
+            filename = iouuid.generate_id(self.path / filename, size=2)
             with open(self.path / filename, m) as file:
                 file.write(data)
                 for chunk in response.iter_content(chunk_size=size):
@@ -159,11 +162,12 @@ class DownloadManager:
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
         link = video.get('src')
         url = link
+        filename = iouuid.generate_id(self.path / Path(unquote(url)).name, size=2)
         process = subprocess.Popen(
             ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
              url,
              '-c', 'copy',
-             (self.path.absolute() / Path(unquote(url)).name)])
+             filename])
         if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
             process.communicate('y\n')
             process.communicate('y\n')
