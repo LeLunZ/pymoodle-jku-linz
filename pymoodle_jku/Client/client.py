@@ -144,7 +144,7 @@ class DownloadManager:
     def process_response(self, url, response):
         if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
             filename = cnt_dis.split('filename="')[1][:-1]
-            size = 1024 * 1024 * 10
+            size = 1024 * 1024 * 20
             chunk = next(response.iter_content(chunk_size=size))
             try:
                 data = chunk.decode()
@@ -298,7 +298,6 @@ class MoodleClient:
         return r
 
     def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=4), download_path=None):
-        # limiting max_workers to 4 because of the large downloads
         self.session = requests_retry_session()
         self.download_path = download_path
         self.session.hooks['response'].append(self.check_request)
