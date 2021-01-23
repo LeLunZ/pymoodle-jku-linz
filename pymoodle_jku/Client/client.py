@@ -167,7 +167,7 @@ class DownloadManager:
             ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
              url,
              '-c', 'copy',
-             filename])
+             self.path/filename])
         if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
             process.communicate('y\n')
             process.communicate('y\n')
