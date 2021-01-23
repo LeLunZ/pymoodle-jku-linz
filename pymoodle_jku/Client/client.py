@@ -62,6 +62,13 @@ def requests_retry_session_async(
     return session
 
 
+def rsuffix(suffix):
+    if suffix.startswith('.m3u8') or suffix.startswith('.m3u'):
+        return '.mp4'
+    else:
+        return suffix
+
+
 class DownloadManager:
     def __init__(self, urls, client: 'MoodleClient', path):
         self.urls = urls
@@ -162,12 +169,12 @@ class DownloadManager:
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
         link = video.get('src')
         url = link
-        filename = iouuid.generate_id(self.path / Path(unquote(url)).name, size=2)
+        filename = iouuid.generate_id(self.path / Path(unquote(url)).name, rsuffix=rsuffix, size=2)
         process = subprocess.Popen(
             ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
              url,
              '-c', 'copy',
-             self.path/filename])
+             self.path / filename])
         if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
             process.communicate('y\n')
             process.communicate('y\n')
