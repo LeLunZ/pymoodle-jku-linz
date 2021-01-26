@@ -1,49 +1,71 @@
-import asyncio
-import json
-import subprocess
-from io import BytesIO
+import logging
+
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from pymoodle_jku.Classes.course_data import Url
+from pymoodle_jku.Client.client import MoodleClient, DownloadManager
 
-from pymoodle_jku.Classes.course_data import UrlType, Url
-from pymoodle_jku.Client.client import MoodleClient
+logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
-    links_dict = {}
-    # download everything you can
-    client = MoodleClient()
-    client.login(input('username: '), input('password:'))
-    cal = client.calendar()
-    stream = client._download_stream(Url('https://moodle.jku.at/jku/mod/streamurl/view.php?id=4431710', UrlType.Streamurl))
-    res = client.download(Url('https://moodle.jku.at/jku/pluginfile.php/4849684/mod_resource/content/1/IMG_20201026_194952.jpg', UrlType.Url))
-    courses = client.courses_overview()
-    for c in client.courses(courses):
-        for l in c.links:
-            links_dict[l.type] = l
-    temp_dir = Path('./temp')
+
+def debug(msg):
+    logger.debug(f'UniJob: {msg}')
+
+
+def get_all_downloads(dir_, links: [Url]):
+    url_list = dir_ / 'urls.txt'
     try:
-        temp_dir.mkdir()
+        urls = url_list.read_text().split('\n')
+        f = list(filter(lambda l: l.link not in urls, links))
+        return (f, urls)
+    except:
+        return (links, [])
+
+
+def write_urls(dir_, urls):
+    url_list = dir_ / 'urls.txt'
+    url_list.write_text('\n'.join(urls))
+
+
+def update_downloads(dir_):
+    try:
+        dir_.mkdir()
     except:
         pass
-    for l in client.download(links_dict.values()):
-        print(l.result().content)
+    client = MoodleClient()
+    auth = False
+    while not auth:
         try:
-            data = l.result().content.decode()
-        except (UnicodeDecodeError, AttributeError):
-            #
+            auth = client.login(input('username: '), input('password: '))
+        except:
             pass
-    for l in links_dict.values():
-        # download
-        response = client.session.get(l.link)
+    courses = client.courses_overview()
+    for c in client.courses(courses):
+        cur_dir = dir_ / (c.course.fullname.split(',')[1].strip())
         try:
-            filename = response.headers.get('Content-Disposition').split('filename="')[1][:-1]
-        except Exception as e:
-            print(e)
-            continue
-        print(filename)
-        if Path(filename).is_file():
-            continue
-        with open(temp_dir / filename, 'wb') as f:
-            f.write(response.content)
-        pass
-    pass
+            cur_dir.mkdir()
+        except:
+            pass
+
+        new_urls, old_urls = get_all_downloads(dir_, c.links)
+        dm = DownloadManager(new_urls, client, cur_dir)
+
+        dm.download()
+
+        finished_url = old_urls + dm.done
+
+        write_urls(dir_, finished_url)
+        del dm
+
+        debug(f'done with {c.course.shortname}')
+
+
+if __name__ == "__main__":
+    # Change to your download folder
+    # something like ./Courses
+    # The folder must exist already
+    # and the path must be relative to where you start the process
+    # or you can specify an absolut path
+    try:
+        update_downloads(Path('./tmp'))
+    except Exception as err:
+        debug(str(err))
