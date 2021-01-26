@@ -2,6 +2,10 @@
 
 A python client for accessing the jku moodle page. 
 
+## Install
+
+`pip3 install pymoodle-jku -U`
+
 ## Requirements
 
 To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. 
