@@ -2,7 +2,8 @@ import logging
 
 from pathlib import Path
 from pymoodle_jku.Classes.course_data import Url
-from pymoodle_jku.Client.client import MoodleClient, DownloadManager
+from pymoodle_jku.Client.client import DownloadManager
+from pymoodle_jku.Utils.login import login
 
 logger = logging.getLogger(__name__)
 
@@ -26,23 +27,28 @@ def write_urls(dir_, urls):
     url_list.write_text('\n'.join(urls))
 
 
-def download(dir_, username=None, password=None):
+def input_id():
+    return input('Course id (enter to continue): ').strip()
+
+
+def download(dir_, client=None, ids=False):
+    if client is None:
+        client = login()
     try:
         dir_.mkdir()
     except:
         pass
-    client = MoodleClient()
-    auth = False
-    while not auth:
-        try:
-            if username is None:
-                username = input('username: ')
-            if password is None:
-                password = input('password: ')
-            auth = client.login(username, password)
-        except:
-            debug('Login failed, trying again...')
     courses = client.courses_overview()
+    if ids is not False:
+        course_ids = []
+        if ids is True:
+            inp = input_id()
+            while inp != '':
+                course_ids.append(int(inp))
+                inp = input_id()
+        elif type(ids) is list:
+            course_ids = ids
+        courses = list(filter(lambda c: c.id in course_ids,courses))
     for c in client.courses(courses):
         cur_dir = dir_ / (c.course.fullname.split(',')[1].strip())
         try:
