@@ -2,7 +2,9 @@
 
 A python client for accessing the jku moodle page. 
 
+## Requirements
 
+To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. 
 
 ## Examples
 
