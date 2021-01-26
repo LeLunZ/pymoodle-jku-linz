@@ -15,6 +15,29 @@ A python client for accessing the jku moodle page.
 
 To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. 
 
+## Usage of commandline script
+
+After installation:
+
+`pip3 install pymoodle-jku -U`
+
+just run:
+
+`pymoodle -d ./Courses`
+
+> usage: pymoodle [-h] -d DOWNLOAD [-u USERNAME] [-p PASSWORD]
+>
+> Download moodle files
+>
+> optional arguments:
+>   -h, --help            show this help message and exit
+>   -d DOWNLOAD, --download DOWNLOAD
+>                         path to download directory
+>   -u USERNAME, --username USERNAME
+>                         jku moodle username
+>   -p PASSWORD, --password PASSWORD
+>                         jku moodle password
+
 ## Examples
 
 There are two examples:
