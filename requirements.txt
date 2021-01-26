@@ -1,0 +1,5 @@
+io-uuid==0.0.5
+lxml==4.6.2
+pytube==10.4.1
+requests==2.25.1
+requests-futures==1.0.0

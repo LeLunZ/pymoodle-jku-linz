@@ -5,13 +5,10 @@ from urllib.parse import unquote
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
-from io import BytesIO, StringIO
-from tempfile import NamedTemporaryFile
 from typing import Union, Generator
 
 import iouuid
 import requests
-from requests import Response
 from requests.adapters import HTTPAdapter
 
 from requests_futures.sessions import FuturesSession
