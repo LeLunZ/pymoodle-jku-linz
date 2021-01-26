@@ -28,24 +28,27 @@ just run:
 with the `-i` option you can specify which courses to download. If no ids are given, you will be shown all ids and courses and be promted to enter ids.  
 
 > usage: pymoodle.py [-h] [-d DOWNLOAD] [-c] [-i [IDS]] [-u USERNAME]
->                    [-p PASSWORD]
+>                 [-p PASSWORD]
 >
 > Download moodle files
 >
 > optional arguments:
->   -h, --help            show this help message and exit
->   -d DOWNLOAD, --download DOWNLOAD
->                         path to download directory
->   -c, --courses         list all courses with its ids
->   -i [IDS], --ids [IDS]
->                         list of course ids to download (seperated by comma
->                         52623,38747,27364). If no id is specified but -i is
->                         given you can enter the ids after starting the script
->                         (ids will be displayed)
->   -u USERNAME, --username USERNAME
->                         jku moodle username
->   -p PASSWORD, --password PASSWORD
->                         jku moodle password
+>
+> -h, --help            show this help message and exit
+>
+> -d DOWNLOAD, --download DOWNLOAD 
+> 							path to download directory
+>
+> -c, --courses	   list all courses with its ids
+> -i [IDS], --ids [IDS]
+> 							list of course ids to download (seperated by comma
+> 							52623,38747,27364). If no id is specified but -i is
+> 							given you can enter the ids after starting the script
+> 							(ids will be displayed)
+> -u USERNAME, --username USERNAME
+> 							jku moodle username
+> -p PASSWORD, --password PASSWORD
+> 							jku moodle password
 
 ## Examples
 

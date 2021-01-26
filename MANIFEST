@@ -9,4 +9,5 @@ pymoodle_jku/Classes/course.py
 pymoodle_jku/Classes/course_data.py
 pymoodle_jku/Client/client.py
 pymoodle_jku/Utils/downloading.py
+pymoodle_jku/Utils/login.py
 pymoodle_jku/Utils/timetable.py
