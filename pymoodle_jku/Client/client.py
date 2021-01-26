@@ -14,7 +14,7 @@ from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from lxml import html
 from urllib3 import Retry
-from pytube import YouTube, Stream
+from pytube import YouTube
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
