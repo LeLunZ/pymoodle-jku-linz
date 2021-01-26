@@ -4,6 +4,9 @@ README.md
 setup.cfg
 setup.py
 pymoodle_jku/__init__.py
+pymoodle_jku/pymoodle.py
 pymoodle_jku/Classes/course.py
 pymoodle_jku/Classes/course_data.py
 pymoodle_jku/Client/client.py
+pymoodle_jku/Utils/downloading.py
+pymoodle_jku/Utils/timetable.py

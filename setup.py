@@ -36,7 +36,7 @@ setup(
         'Programming Language :: Python :: 3.9',
     ],
     entry_points={
-        'console_scripts': ['pymoodle=pymoodle_jku.pymoodle'],
+        'console_scripts': ['pymoodle=pymoodle_jku.pymoodle:main'],
     },
     long_description=long_description,
     long_description_content_type='text/markdown'
