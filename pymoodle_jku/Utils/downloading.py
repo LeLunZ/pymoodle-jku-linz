@@ -26,7 +26,7 @@ def write_urls(dir_, urls):
     url_list.write_text('\n'.join(urls))
 
 
-def update_downloads(dir_):
+def download(dir_, username=None, password=None):
     try:
         dir_.mkdir()
     except:
@@ -35,9 +35,13 @@ def update_downloads(dir_):
     auth = False
     while not auth:
         try:
-            auth = client.login(input('username: '), input('password: '))
+            if username is None:
+                username = input('username: ')
+            if password is None:
+                password = input('password: ')
+            auth = client.login(username, password)
         except:
-            pass
+            debug('Login failed, trying again...')
     courses = client.courses_overview()
     for c in client.courses(courses):
         cur_dir = dir_ / (c.course.fullname.split(',')[1].strip())
@@ -66,6 +70,6 @@ if __name__ == "__main__":
     # and the path must be relative to where you start the process
     # or you can specify an absolut path
     try:
-        update_downloads(Path('./tmp'))
+        download(Path('./tmp'))
     except Exception as err:
         debug(str(err))

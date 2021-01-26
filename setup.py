@@ -10,7 +10,7 @@ except FileNotFoundError:
 
 setup(
     name='pymoodle-jku',
-    packages=['pymoodle_jku', 'pymoodle_jku.Classes', 'pymoodle_jku.Client'],
+    packages=['pymoodle_jku', 'pymoodle_jku.Classes', 'pymoodle_jku.Client', 'pymoodle_jku.Utils'],
     version='0.3.9',
     license='BSD 3-Clause',
     description='A client for the moodle page of https://www.jku.at',
@@ -35,6 +35,9 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
+    entry_points={
+        'console_scripts': ['pymoodle=pymoodle_jku.pymoodle'],
+    },
     long_description=long_description,
     long_description_content_type='text/markdown'
 )

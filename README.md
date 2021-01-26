@@ -21,13 +21,13 @@ There are two examples:
 
 ### Downloading
 
-Open the [downloading.py](pymoodle_jku/Tests/downloading.py) and run it. It will download all possible files to your disk.
+Open the [downloading.py](pymoodle_jku/Utils/downloading.py) and run it. It will download all possible files to your disk.
 
 It will also store a txt file with all downloaded urls. So you can run it multiple times, and it will only download stuff once.
 
 ### Timeline
 
-Run [timetable.py](pymoodle_jku/Tests/timetable.py) and get the full json response from your timetable. (In a next release this will be a object, with type hints not a json)
+Run [timetable.py](pymoodle_jku/Utils/timetable.py) and get the full json response from your timetable. (In a next release this will be a object, with type hints not a json)
 
 ## Features
 
