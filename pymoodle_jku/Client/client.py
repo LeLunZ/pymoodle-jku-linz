@@ -227,6 +227,10 @@ class MoodleClient:
         self.session.cookies.set(f'_shibsession_{cookies["shib_idp_session"]}', f'_{cookies["JSESSIONID"]}')
         return True
 
+    def grade_overview(self):
+        self.session.get('https://moodle.jku.at/jku/grade/report/overview/index.php')
+        pass
+
     def courses_overview(self) -> [Course]:
         headers = {'Content-type': 'application/json'}
         response = self.session.post(
