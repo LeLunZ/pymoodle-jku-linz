@@ -1,23 +1,18 @@
 import json
-import subprocess
 import time
-from urllib.parse import unquote
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
-from pathlib import Path
-from typing import Union, Generator
+from typing import Union, List
 
-import iouuid
 import requests
 from requests.adapters import HTTPAdapter
-
 from requests_futures.sessions import FuturesSession
-from lxml import html
 from urllib3 import Retry
-from pytube import YouTube
 
 from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData
+from pymoodle_jku.Classes.evaluation import Evaluation
+from pymoodle_jku.Utils.moodle_html_parser import LoginPage, MyPage, \
+    ValuationOverviewPage, CoursePage, ValuationPage
 
 
 def requests_retry_session(
@@ -59,135 +54,6 @@ def requests_retry_session_async(
     return session
 
 
-def rsuffix(suffix):
-    if suffix.startswith('.m3u8') or suffix.startswith('.m3u'):
-        return '.mp4'
-    else:
-        return suffix
-
-
-class DownloadManager:
-    def __init__(self, urls, client: 'MoodleClient', path):
-        self.urls = urls
-        self.failed = []
-        self.done = []
-        self.client = client
-        self.path = Path(path)
-
-    def get_request(self, url):
-        response = self.client.session.get(url, stream=True)
-        return self.process_response(url, response)
-
-    def post_request(self, url):
-        response = self.client.session.post('https://moodle.jku.at/jku/mod/folder/download_folder.php',
-                                            data={'id': url.split('id=')[1].split('&')[0],
-                                                  'sesskey': self.client.sesskey}, stream=True)
-        return self.process_response(url, response)
-
-    def _download(self, l):
-        if l.type is UrlType.Resource:
-            return self.client.future_session.executor.submit(self.get_request, l.link)
-        elif l.type is UrlType.Folder:
-            return self.client.future_session.executor.submit(self.post_request, l.link)
-        elif l.type is UrlType.Streamurl:
-            return self.client.future_session.executor.submit(self._download_stream, l)
-        elif l.type is UrlType.Url:
-            return self.client.future_session.executor.submit(self.download_from_url, l)
-        else:
-            # return true because we don't want to try to download again.
-            def return_true(l):
-                return True, l.link
-
-            return self.client.future_session.executor.submit(return_true, l)
-
-    def download(self):
-        futures = [d for l in self.urls if (d := self._download(l)) is not None]
-        for f in as_completed(futures):
-            try:
-                done, url = f.result()
-                if done:
-                    self.done.append(url)
-                else:
-                    self.failed.append(url)
-            except:
-                pass
-
-    def download_from_url(self, url):
-        p = Path(url)
-        link = url
-        if '?' in p.name and '=' in p.name:  # doing this for moodle download
-            link += '&forcedownload=1&redirect=1'  # normally every other server ignores this
-        else:
-            link += '?forcedownload=1&redirect=1'
-        response = self.client.session.get(link, stream=True)
-        if response.url.startswith('https://www.youtube.com/watch') or response.url.startswith(
-                'youtube.com/watch') or response.url.startswith('https://youtube.com/watch'):
-            youtube = YouTube(response.url)
-            response.close()
-            highest_res_stream = youtube.streams.filter(resolution='720p', progressive=True, file_extension='mp4')
-            if len(highest_res_stream) == 0:
-                highest_res_stream = youtube.streams.filter(progressive=True, file_extension='mp4').order_by(
-                    'resolution').desc()
-                if len(highest_res_stream) != 0:
-                    download_obj = highest_res_stream[0]
-                else:
-                    return False, url
-            else:
-                download_obj = highest_res_stream.order_by('fps')[-1]
-
-            filename = download_obj.default_filename
-            filename = iouuid.generate_id(self.path / filename, size=2)
-            download_obj.download(output_path=self.path, filename=filename)
-            return True, url
-        else:
-            return self.process_response(url, response)
-
-    def process_response(self, url, response):
-        if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
-            filename = cnt_dis.split('filename="')[1][:-1]
-            size = 1024 * 1024 * 20
-            chunk = next(response.iter_content(chunk_size=size))
-            try:
-                data = chunk.decode()
-                m = 'w'
-            except (UnicodeDecodeError, AttributeError):
-                m = 'wb'
-                data = chunk
-            filename = iouuid.generate_id(self.path / filename, size=2)
-            with open(self.path / filename, m) as file:
-                file.write(data)
-                for chunk in response.iter_content(chunk_size=size):
-                    file.write(chunk)
-            del data
-            return True, url
-        else:
-            response.close()
-            return False, url
-
-    def _download_stream(self, l: Url):
-        response = self.client.session.get(l.link)
-        tree = html.fromstring(response.content.decode('utf-8'))
-        video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
-        link = video.get('src')
-        url = link
-        filename = iouuid.generate_id(self.path / Path(unquote(url)).name, rsuffix=rsuffix, size=2)
-        process = subprocess.Popen(
-            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
-             url,
-             '-c', 'copy',
-             self.path / filename])
-        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
-            process.communicate('y\n')
-            process.communicate('y\n')
-            process.communicate('y\n')
-        return_code = process.wait(timeout=30 * 60)
-        if return_code != 0:
-            return False, l.link
-            # or return False?
-        time.sleep(0.5)
-        return True, l.link
-
-
 class MoodleClient:
     def login(self, username, password):
         if username is None or password is None:
@@ -199,91 +65,89 @@ class MoodleClient:
         # session_id = url.split('jsessionid=')[1].split('?')[0]
         response = self.session.post(url, data={'j_username': username, 'j_password': password,
                                                 '_eventId_proceed': 'Login'}, headers=headers)
-        tree = html.fromstring(response.content.decode('utf-8'))
-        form_action = tree.xpath('//form/@action')[0]
-        form = tree.xpath('//form/div/input')
-        data = {}
-        for inp in form:
-            name = inp.xpath('./@name')[0]
-            value = inp.xpath('./@value')[0]
-            data[name] = value
-        response = self.session.post(form_action, data=data, headers=headers)
+
+        # parsing Login page
+        l_page = LoginPage.from_response(response)
+        response = self.session.post(l_page.action, data=l_page.data, headers=headers)
+
         response = self.session.get('https://moodle.jku.at/')
-        content = response.content.decode('utf-8')
-        index = content.find('sesskey')
-        sesskey, count, qoute_count, sesskey_text = '', 0, 0, content[index:]
-        while True:
-            if sesskey_text[count] == '"':
-                qoute_count += 1
-            elif qoute_count == 2:
-                sesskey += sesskey_text[count]
-            if qoute_count == 3:
-                break
-            count += 1
-        self.sesskey = sesskey
+        m_page = MyPage.from_response(response)
+
+        self.sesskey, self.userid = m_page.sesskey, m_page.userid
         cookies = self.session.cookies.get_dict()
         self.session.cookies.clear()
         self.session.cookies.set('MoodleSessionjkuSessionCookie', cookies['MoodleSessionjkuSessionCookie'])
         self.session.cookies.set(f'_shibsession_{cookies["shib_idp_session"]}', f'_{cookies["JSESSIONID"]}')
         return True
 
-    def grade_overview(self):
-        self.session.get('https://moodle.jku.at/jku/grade/report/overview/index.php')
-        pass
+    def valuation_overview(self) -> dict:
+        response = self.session.get('https://moodle.jku.at/jku/grade/report/overview/index.php')
+        v_page = ValuationOverviewPage(response)
+        return v_page.valuation
 
-    def courses_overview(self) -> [Course]:
+    def single_valuation_overview(self, course: Union[Course, list]) -> List[Evaluation]:
+        course_id = course.id
+        response = self.session.get(
+            f'https://moodle.jku.at/jku/course/user.php?mode=grade&id={course_id}&user={self.userid}')
+        v_page = ValuationPage(response)
+        return v_page.evaluations()
+
+    def multi_valuation_overview(self, courses: List[Course] = None):
+
+        def build_valuation(r, c):
+            r.data = (c, ValuationPage(r).evaluations())
+
+        if courses is None:
+            courses = list(self.courses(load_page=False))
+            print(courses)
+
+        futures = [self.future_session.get(
+            f'https://moodle.jku.at/jku/course/user.php?mode=grade&id={course.id}&user={self.userid}', timeout=5,
+            hooks={'response': lambda r, c=course, *args, **kwargs: build_valuation(r, c)}) for
+            course in courses]
+
+        for f in as_completed(futures):
+            try:
+                result = f.result()
+                yield result.data
+            except Exception as e:
+                # dont yield anything
+                pass
+
+    def courses(self, load_page=True, filter_ids=None) -> List[Course]:
         headers = {'Content-type': 'application/json'}
         response = self.session.post(
             f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification',
             data=json.dumps([{"index": 0, "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
                               "args": {"offset": 0, "limit": 0, "classification": "all", "sort": "fullname",
                                        "customfieldname": "", "customfieldvalue": ""}}]), headers=headers)
-        return [Course(*c.values()) for c in json.loads(response.content.decode('utf-8'))[0]['data']['courses']]
 
-    def course_pure(self, url):
-        response = self.session.get(url)
-        tree = html.fromstring(response.content.decode('utf-8'))
-        return tree.xpath('//body')[0]
+        courses_json = json.loads(response.content.decode('utf-8'))[0]['data']['courses']
 
-    def urls_from_page(self, main_region):
-        all_url_imgs = main_region.xpath('.//a/img')
-        return [Url(i.getparent().xpath('./@href')[0],
-                    UrlType[i.getparent().xpath('./@href')[0].split('/')[-2].capitalize()])
-                for i in all_url_imgs]
+        if filter_ids is not None:
+            to_download = []
+            for e in courses_json:
+                if int(e['id']) in filter_ids:
+                    to_download.append(e)
+            courses_json = to_download
 
-    def course(self, url: Union[str, Course]) -> CourseData:
-        body = self.course_pure(url)
-        main_region = body.xpath('.//div[@id=$name]', name='region-main-box')[0]
-        sections = main_region.xpath('.//ul[@class=$name]/li', name='topics')
-        cd = CourseData(url if type(url) is Course else None, self.urls_from_page(main_region), sections)
-        for l in cd.links:
-            l.course = cd
-        return cd
+        if load_page is False:
+            for c in courses_json:
+                yield Course(**c)
 
-    def courses(self, urls: [str, Course]) -> Generator[Union[CourseData, None], None, None]:
+            return
 
-        def processing(r, args, kwargs, course):
-            tree = html.fromstring(r.content.decode('utf-8'))
-            body = tree.xpath('//body')[0]
-            main_region = body.xpath('.//div[@id=$name]', name='region-main-box')[0]
-            sections = main_region.xpath('.//ul[@class=$name]/li', name='topics')
-            all_url_imgs = main_region.xpath('.//a/img')
-            urls = [Url(i.getparent().xpath('./@href')[0],
-                        UrlType[i.getparent().xpath('./@href')[0].split('/')[-2].capitalize()])
-                    for i in all_url_imgs]
-            r.data = CourseData(course, urls, sections)
-            for l in r.data.links:
-                l.course = r.data
+        def build_course(r, c):
+            course = Course(**c, course_page=CoursePage(r))
+            r.data = course
 
-        def prepare_hook(course):
-            return lambda r, *args, **kwargs: processing(r, args, kwargs, course if type(course) is Course else None)
+        futures = [self.future_session.get(c['viewurl'], timeout=5,
+                                           hooks={'response': lambda r, c=c, *args, **kwargs: build_course(r, c)})
+                   for c in courses_json]
 
-        futures = [
-            self.future_session.get(url if type(url) is str else url.viewurl, timeout=5,
-                                    hooks={'response': prepare_hook(url)}) for url in urls]
-        for cd in as_completed(futures):
+        for f in as_completed(futures):
             try:
-                result = cd.result()
+                result = f.result()
                 yield result.data
             except Exception as e:
                 # dont yield anything
@@ -309,3 +173,4 @@ class MoodleClient:
         self.future_session = requests_retry_session_async(session=self.session, executor=pool_executor)
         self.future_session.hooks['response'].append(self.check_request)
         self.sesskey = None
+        self.userid = None

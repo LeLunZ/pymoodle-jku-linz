@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from typing import Union
+
+from pymoodle_jku.Utils.moodle_html_parser import CoursePage
 
 
 @dataclass
@@ -21,3 +24,7 @@ class Course:
     hidden: bool
     showshortname: bool
     coursecategory: str
+    course_page: Union[CoursePage, None] = None
+
+    def __hash__(self):
+        return hash(self.id)
