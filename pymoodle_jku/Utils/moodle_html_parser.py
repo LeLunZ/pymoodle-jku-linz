@@ -11,11 +11,6 @@ from pymoodle_jku.Classes.course_data import Url, UrlType, CourseData
 from pymoodle_jku.Classes.evaluation import Evaluation
 
 
-class Body:
-    def __init__(self, url, body):
-        self.url = url
-
-
 def d_utf8(obj):
     return obj.decode('utf-8')
 

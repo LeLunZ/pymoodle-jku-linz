@@ -18,7 +18,7 @@ def print_courses(client):
 
 
 def print_results_table(data, header, quiet=True):
-    str_l = max(len(t) if type(t) is str else len(t.fullname) for t in data.keys())
+    str_l = max(len(t) if isinstance(t, str) else len(t.fullname) for t in data.keys())
     str_r = max(len(t) for t in data.values())
     print(f'{header[0].ljust(str_l)} {header[1].ljust(str_r)}')
     if quiet:
@@ -26,7 +26,7 @@ def print_results_table(data, header, quiet=True):
             print(f'{c.ljust(str_l)} {v.ljust(str_r)}')
         return None
     else:
-        items = data.items()
+        items = list(data.items())
         options = [f'{c.fullname.ljust(str_l)} {v.ljust(str_r)}' for c, v in items]
         options.append('Exit')
         option, index = pick(options)
