@@ -34,17 +34,24 @@ def write_urls(dir_, urls):
 def main(client: MoodleClient, args):
     path = Path('./' if args.path is None else args.path)
 
-    ids = None
-    if args.ids is True:
-        courses = list(client.courses(load_page=False))
+    if args.search and args.interactive:
+        print('Search parameters can\'t be used when using interactive search mode.')
+        exit(0)
+    if args.interactive is True:
+        if args.quiet:
+            print('Interactive mode can\'t be used while being quiet mode.')
+            exit(0)
+        courses = list(client.courses(load_pages=False))
         selected = pick(list(map(lambda c: f'{c.id}: {c.fullname}', courses)), multiselect=True, min_selection_count=0)
         if len(selected) == 0:
             exit(0)
-        ids = [courses[i].id for o, i in selected]
-    if type(args.ids) is str:
-        ids = list(map(lambda i: int(i), args.ids.split(',')))
-
-    courses = client.courses(filter_ids=ids)
+        picked_course_ids = [courses[idx].id for v, idx in selected]
+        courses = client.courses(load_pages=courses, filter_exp=lambda c, s=tuple(picked_course_ids): c['id'] in s)
+    elif args.search is not None:
+        courses = client.courses(
+            filter_exp=lambda c, search=args.search: any(s.lower() in c['fullname'].lower() for s in search))
+    else:
+        courses = client.courses()
 
     for c in courses:
         cur_dir = path / (c.fullname.split(',')[1].strip())
@@ -54,11 +61,15 @@ def main(client: MoodleClient, args):
             pass
 
         valuations = client.single_valuation_overview(c)
-        all_links = c.course_page.to_course_data().links + valuations
+        if args.exams:
+            all_links = valuations
+            new_urls, old_urls = get_all_downloads(path, all_links)
+            new_urls = all_links
+        else:
+            all_links = c.course_page.to_course_data().links + valuations
+            new_urls, old_urls = get_all_downloads(path, all_links)
 
-        new_urls, old_urls = get_all_downloads(path, all_links)
-
-        dm = DownloadManager(all_links, client, path=cur_dir)
+        dm = DownloadManager(new_urls, client, path=cur_dir)
         dm.download()
 
         finished_url = old_urls + [u for u, f in dm.done]

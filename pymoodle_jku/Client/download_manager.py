@@ -42,11 +42,18 @@ class DownloadManager:
         return self.process_response(url, response)
 
     def download_evaluation(self, l):
-        response = self.client.session.get(l.url)
+        if type(l) is Evaluation:
+            weblink = l.url
+            response = self.client.session.get(l.url)
+        elif type(l) is Url:
+            weblink = l.link
+            response = self.client.session.get(l.link)
+        else:
+            raise Exception('wrong class')
         q_page = QuizSummary(response)
         u = q_page.quiz_url()
         if u is None:
-            return False, l.url, None
+            return False, weblink, None
 
         response = self.client.session.get(u.link)
 
@@ -78,7 +85,7 @@ class DownloadManager:
 
         # pdfkit.from_string(html_str.decode('utf-8'), filename)
 
-        return True, l.url, self.path / filename
+        return True, weblink, self.path / filename
 
         # return self.process_response(url, response)
 
@@ -92,7 +99,7 @@ class DownloadManager:
         elif l.type is UrlType.Streamurl:
             return self.client.future_session.executor.submit(self._download_stream, l)
         elif l.type is UrlType.Url:
-            return self.client.future_session.executor.submit(self.download_from_url, l)
+            return self.client.future_session.executor.submit(self.download_from_url, l.link)
         else:
             # return false because if we later add the datatype we still want to download it.
             def return_false(l):

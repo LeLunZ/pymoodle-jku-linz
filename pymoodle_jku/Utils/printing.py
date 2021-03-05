@@ -8,7 +8,7 @@ def clean_screen():
     if platform.system() == 'Windows':
         subprocess.call('cls')
     else:
-        print(chr(27) + "[2J")
+        subprocess.call('clear')
 
 
 def print_courses(client):
@@ -31,3 +31,25 @@ def print_results_table(data, header, quiet=True):
         options.append('Exit')
         option, index = pick(options)
         return None if index == len(items) else items[index][0]
+
+
+def print_array_results_table(data, header):
+    cols = len(header)
+    lengths = []
+    reordered = list(zip(*data))
+    splitline = '|'
+    headerline = '|'
+    for i in range(cols):
+        str_l = max(len(t) for t in (reordered[i] + (header[i],)))
+        lengths.append(str_l)
+        headerline += f' {header[i].ljust(str_l)} |'
+        splitline += '-' * (str_l + 2) + '|'
+    print(splitline)
+    print(headerline)
+    print(splitline)
+    for i in range(len(data)):
+        print('|', end='')
+        for j in range(len(data[i])):
+            print(f' {data[i][j].ljust(lengths[j])}', end=' |')
+        print()  # line break
+    print(splitline)

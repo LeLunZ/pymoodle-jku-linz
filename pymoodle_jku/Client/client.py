@@ -11,6 +11,7 @@ from urllib3 import Retry
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.evaluation import Evaluation
+from pymoodle_jku.Classes.events import Event
 from pymoodle_jku.Utils.moodle_html_parser import LoginPage, MyPage, \
     ValuationOverviewPage, CoursePage, ValuationPage
 
@@ -85,7 +86,7 @@ class MoodleClient:
         v_page = ValuationOverviewPage(response)
         return v_page.valuation
 
-    def single_valuation_overview(self, course: Union[Course, list]) -> List[Evaluation]:
+    def single_valuation_overview(self, course: Course) -> List[Evaluation]:
         course_id = course.id
         response = self.session.get(
             f'https://moodle.jku.at/jku/course/user.php?mode=grade&id={course_id}&user={self.userid}')
@@ -98,8 +99,7 @@ class MoodleClient:
             r.data = (c, ValuationPage(r).evaluations())
 
         if courses is None:
-            courses = list(self.courses(load_page=False))
-            print(courses)
+            courses = list(self.courses(load_pages=False))
 
         futures = [self.future_session.get(
             f'https://moodle.jku.at/jku/course/user.php?mode=grade&id={course.id}&user={self.userid}', timeout=5,
@@ -114,28 +114,30 @@ class MoodleClient:
                 # dont yield anything
                 pass
 
-    def courses(self, load_page=True, filter_ids=None) -> List[Course]:
-        headers = {'Content-type': 'application/json'}
-        response = self.session.post(
-            f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification',
-            data=json.dumps([{"index": 0, "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
-                              "args": {"offset": 0, "limit": 0, "classification": "all", "sort": "fullname",
-                                       "customfieldname": "", "customfieldvalue": ""}}]), headers=headers)
+    def courses(self, load_pages: Union[bool, list] = True, filter_exp=None) -> List[Course]:
+        if type(load_pages) is list:
+            courses_json = load_pages
+        else:
+            headers = {'Content-type': 'application/json'}
+            response = self.session.post(
+                f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification',
+                data=json.dumps(
+                    [{"index": 0, "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
+                      "args": {"offset": 0, "limit": 0, "classification": "all", "sort": "fullname",
+                               "customfieldname": "", "customfieldvalue": ""}}]), headers=headers)
 
-        courses_json = json.loads(response.content.decode('utf-8'))[0]['data']['courses']
+            courses_json = json.loads(response.content.decode('utf-8'))[0]['data']['courses']
 
-        if filter_ids is not None:
-            to_download = []
-            for e in courses_json:
-                if int(e['id']) in filter_ids:
-                    to_download.append(e)
-            courses_json = to_download
+            if load_pages is False:
+                if filter_exp is not None:
+                    courses_json = filter(filter_exp, courses_json)
+                for c in courses_json:
+                    yield Course(**c)
 
-        if load_page is False:
-            for c in courses_json:
-                yield Course(**c)
+                return
 
-            return
+        if filter_exp is not None:
+            courses_json = filter(filter_exp, courses_json)
 
         def build_course(r, c):
             course = Course(**c, course_page=CoursePage(r))
@@ -153,12 +155,27 @@ class MoodleClient:
                 # dont yield anything
                 pass
 
-    def calendar(self, limit=26):
+    def calendar(self, limit=26) -> List[Event]:
         url = f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_calendar_get_action_events_by_timesort'
         data = [{"index": 0, "methodname": "core_calendar_get_action_events_by_timesort",
                  "args": {"limitnum": limit, "timesortfrom": int(time.time()), "limittononsuspendedevents": True}}]
         response = self.session.post(url, json=data)
-        return response.json()
+
+        events = []
+        for o in response.json()[0]['data']['events']:
+            event = Event(
+                o['id'],
+                o['name'],
+                o['description'],
+                o['modulename'],
+                o['eventtype'],
+                o['timestart'],
+                o['timesort'],
+                o['course']['fullname'],
+                o['course']['id'],
+                o['url'])
+            events.append(event)
+        return events
 
     @staticmethod
     def check_request(r, *args, **kwargs):

@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
 
 import keyring
@@ -12,8 +13,11 @@ def debug(msg):
     logger.debug(f'UniJob: {msg}')
 
 
-def login(username=None, password=None, save_password_query=True) -> MoodleClient:
-    client = MoodleClient()
+def login(username=None, password=None, save_password_query=True, threads: int = None) -> MoodleClient:
+    if threads is None:
+        client = MoodleClient()
+    else:
+        client = MoodleClient(pool_executor=ThreadPoolExecutor(max_workers=threads))
     pymoodle_conf = Path.home() / '.pymoodle'
     if pymoodle_conf.is_file():
         username = pymoodle_conf.read_text().strip()
@@ -31,6 +35,8 @@ def login(username=None, password=None, save_password_query=True) -> MoodleClien
                     pymoodle_conf.write_text(username)
                     keyring.set_password('pymoodle-jku', username, password)
             auth = client.login(username, password)
+        except KeyboardInterrupt:
+            exit(0)
         except:
             print('Login failed, trying again...')
             debug('Login failed, trying again...')

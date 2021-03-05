@@ -46,7 +46,7 @@ class TestPyMoodleClient(unittest.TestCase):
         self.client.login(username, password)
 
     def test_courses_without_page(self):
-        courses = self.client.courses(load_page=False)
+        courses = self.client.courses(load_pages=False)
         all_courses = []
         for c in courses:
             # check if course is duplicated
