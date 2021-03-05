@@ -1,0 +1,9 @@
+html2markdown
+keyring
+pick
+pytube
+lxml
+urllib3
+requests
+requests-futures
+io-uuid

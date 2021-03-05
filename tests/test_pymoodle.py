@@ -3,9 +3,15 @@ from pathlib import Path
 
 import keyring
 
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Classes.course_data import CourseData
 from pymoodle_jku.Classes.course import Course
+from pymoodle_jku.Classes.course_data import CourseData
+from pymoodle_jku.Client.client import MoodleClient
+
+
+# If you want to suppress the ResourceWarnings uncomment this:
+# import warnings
+# warnings.filterwarnings("ignore", category=ResourceWarning)
+# These warnings are an indication that everything is working correctly and nothing is going wrong.
 
 
 class TestPyMoodleClientLogin(unittest.TestCase):
@@ -88,7 +94,7 @@ class TestPyMoodleClient(unittest.TestCase):
     def test_detailed_valuation(self):
         valuation_generator = self.client.multi_valuation_overview()
 
-        self.assertGreater(len(valuation_generator), 0)
+        self.assertGreater(len(list(valuation_generator)), 0)
 
 
 if __name__ == '__main__':
