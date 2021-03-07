@@ -9,7 +9,7 @@ def main(client: MoodleClient, args: Namespace):
     if args.search:
         courses = filter(lambda c: any(s.lower() in c.fullname.lower() for s in args.search),
                          client.courses(load_pages=False))
-        evals = client.multi_valuation_overview(courses)
+        evals = client.multi_valuation(courses)
         for c, eval in evals:
             print(f' {c.fullname}')
             if len(eval) == 0:
@@ -39,7 +39,7 @@ def main(client: MoodleClient, args: Namespace):
             if course is None:
                 exit(0)
             else:
-                evaluations = client.single_valuation_overview(course)
+                evaluations = client.single_valuation(course)
                 clean_screen()
                 if len(evaluations) == 0:
                     continue
@@ -48,4 +48,3 @@ def main(client: MoodleClient, args: Namespace):
                                           ['Name', 'Points', 'Range'])
                 enter_press = input('\nPress Enter to continue')
                 clean_screen()
-            pass

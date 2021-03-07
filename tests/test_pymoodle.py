@@ -92,7 +92,7 @@ class TestPyMoodleClient(unittest.TestCase):
         self.assertIs(type(overview), dict)
 
     def test_detailed_valuation(self):
-        valuation_generator = self.client.multi_valuation_overview()
+        valuation_generator = self.client.multi_valuation()
 
         self.assertGreater(len(list(valuation_generator)), 0)
 

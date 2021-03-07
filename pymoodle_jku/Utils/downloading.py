@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union, List
+from typing import Union, List, Tuple
 
 from pick import pick
 
@@ -16,7 +16,14 @@ def debug(msg):
     logger.debug(f'UniJob: {msg}')
 
 
-def get_all_downloads(dir_, links: List[Union[Url, Evaluation]]):
+def get_all_downloads(dir_: Path, links: List[Union[Url, Evaluation]]) -> Tuple[
+    List[Union[Url, Evaluation]], List[str]]:
+    '''
+    Compares the urls from urls.txt with [links].
+    :param dir_: the directory where urls.txt is stored.
+    :param links: A list of Urls or Evaluations from where to get the urls
+    :return: The new urls which are not found in urls.txt
+    '''
     url_list = dir_ / 'urls.txt'
     try:
         urls = url_list.read_text().split('\n')
@@ -26,7 +33,13 @@ def get_all_downloads(dir_, links: List[Union[Url, Evaluation]]):
         return (links, [])
 
 
-def write_urls(dir_, urls):
+def write_urls(dir_: Path, urls: List[str]) -> None:
+    """
+    Writes the given urls to the urls.txt.
+    :param dir_:
+    :param urls:
+    :return:
+    """
     url_list = dir_ / 'urls.txt'
     url_list.write_text('\n'.join(urls))
 
@@ -46,10 +59,10 @@ def main(client: MoodleClient, args):
         if len(selected) == 0:
             exit(0)
         picked_course_ids = [courses[idx].id for v, idx in selected]
-        courses = client.courses(load_pages=courses, filter_exp=lambda c, s=tuple(picked_course_ids): c['id'] in s)
+        courses = client.courses(load_pages=courses, filter_exp=lambda c, s=tuple(picked_course_ids): c.id in s)
     elif args.search is not None:
         courses = client.courses(
-            filter_exp=lambda c, search=args.search: any(s.lower() in c['fullname'].lower() for s in search))
+            filter_exp=lambda c, search=args.search: any(s.lower() in c.fullname.lower() for s in search))
     else:
         courses = client.courses()
 
@@ -60,7 +73,7 @@ def main(client: MoodleClient, args):
         except:
             pass
 
-        valuations = client.single_valuation_overview(c)
+        valuations = client.single_valuation(c)
         if args.exams:
             all_links = valuations
             new_urls, old_urls = get_all_downloads(path, all_links)

@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from typing import Optional, List
 from urllib.parse import urlparse, unquote
 
 import html2markdown as html2markdown
@@ -11,12 +12,16 @@ from pymoodle_jku.Classes.course_data import Url, UrlType, CourseData
 from pymoodle_jku.Classes.evaluation import Evaluation
 
 
-def d_utf8(obj):
+def d_utf8(obj) -> str:
     return obj.decode('utf-8')
 
 
 class MainRegion:
     def __init__(self, response):
+        """
+        Takes a Response and extracts the region-main-box from it.
+        :param response: A Response from a request call.
+        """
         tree = html.fromstring(response.content.decode('utf-8'))
         main_region = tree.xpath('//body//div[@id="region-main-box"]')[0]
 
@@ -27,7 +32,15 @@ class MainRegion:
 # href="https://moodle.jku.at/jku/mod/quiz/review.php?attempt=661309&cmid=4628980"
 
 class QuizSummary(MainRegion):
-    def quiz_url(self):
+    """
+    QuizSummary is the Page where you can press "Review Quiz" on moodle.
+    """
+
+    def quiz_url(self) -> Optional[Url]:
+        """
+        The Url to the Moodle Quiz will be extracted.
+        :return: A Url object if found, else None.
+        """
         all_urls = self.region.xpath('.//a/@href')
 
         for url in all_urls:
@@ -45,7 +58,14 @@ class QuizSummary(MainRegion):
             return None
 
 
-def convert_elements(elements):
+def convert_elements(elements) -> str:
+    """
+    Cleans up the elements of a html string.
+    Also converts it to markdown.
+    :param elements: A List of str.
+    :return: A markdown string.
+    """
+
     output = ''
     cleaner = Cleaner()
     cleaner.forms = False
@@ -64,6 +84,10 @@ def convert_elements(elements):
 
 class QuizPage(MainRegion):
     def __init__(self, response):
+        """
+        QuizPage is real Quiz Page, where all answers and questions are visible.
+        :param response: A Response to extract the quiz from.
+        """
         super().__init__(response)
         self.quiz = self.region.xpath('.//div[@role="main"]')[0]
         self.summary = self.quiz.xpath('.//table[contains(@class,"quizreviewsummary")]')[0]
@@ -81,7 +105,11 @@ class QuizPage(MainRegion):
             else:
                 self.questions.append((divs[0], None))
 
-    def md_quiz(self):
+    def md_quiz(self) -> str:
+        """
+        Extracts the questions and answers as markdown strings.
+        :return: A markdown string.
+        """
         questions = zip(self.info, self.questions)
 
         summary = html2markdown.convert(d_utf8(etree.tostring(self.summary)))
@@ -113,20 +141,34 @@ class QuizPage(MainRegion):
 
 
 class CoursePage(MainRegion):
-    def __init__(self, response):
-        super().__init__(response)
+    """
+    CoursePage is the Page of a Moodle Course. There you can see all Urls and sections written by Professors.
+    """
 
     def sections(self):
+        """
+        Returns all the sections of a CoursePage. Sections are normally different Topics.
+        :return: A List of lxml HTML objects.
+        """
+        # TODO check return value
         return self.region.xpath('.//ul[@class=$name]/li', name='topics')
 
-    def urls(self):
+    def urls(self) -> List[Url]:
+        """
+        Loads all the URLs on a CoursePage.
+        :return: A List of URLs.
+        """
         all_url_imgs = self.region.xpath('.//a/img')
         return [Url(i.getparent().xpath('./@href')[0],
                     UrlType[url_p[3].capitalize()])
                 for i in all_url_imgs if
                 (url_p := Path(unquote(urlparse((url := i.getparent().xpath('./@href')[0])).path)).parts)[2] == 'mod']
 
-    def to_course_data(self):
+    def to_course_data(self) -> CourseData:
+        """
+        Converts the CoursePage to CourseData with links and sections.
+        :return: A converted CourseData.
+        """
         cd = CourseData(links=self.urls(), sections=self.sections())
 
         for l in cd.links:
@@ -137,11 +179,21 @@ class CoursePage(MainRegion):
 
 class LoginPage:
     def __init__(self, action, data):
+        """
+        Login Page is the login page of JKU.
+        :param action: Is the form action of a html form.
+        :param data: Is the data of this form as dict.
+        """
         self.data = data
         self.action = action
 
     @staticmethod
-    def from_response(response):
+    def from_response(response) -> 'LoginPage':
+        """
+        Creates a LoginPage from a Response.
+        :param response: A Response from some request.
+        :return: The LoginPage of the response.
+        """
         tree = html.fromstring(response.content.decode('utf-8'))
         form_action = tree.xpath('//form/@action')[0]
         form = tree.xpath('//form/div/input')
@@ -156,11 +208,22 @@ class LoginPage:
 
 class MyPage:
     def __init__(self, sesskey, userid):
+        """
+        The (My) Dashboard Page of Moodle.
+        :param sesskey: Extracted Session Key
+        :param userid: Extracted User Id
+        """
         self.sesskey = sesskey
         self.userid = userid
 
     @staticmethod
-    def from_response(response):
+    def from_response(response) -> 'MyPage':
+        """
+        Creates a MyPage from a Response.
+
+        :param response: Response to create the page from.
+        :return: A Parsed MyPage.
+        """
         content = response.content.decode('utf-8')
         logout_url = re.escape('https://moodle.jku.at/jku/login/logout.php?sesskey=')
         found_item = re.findall(f'{logout_url}([\w\d]+)', content)
@@ -192,6 +255,10 @@ class MyPage:
 
 class ValuationOverviewPage(MainRegion):
     def __init__(self, response):
+        """
+        ValuationOverviewPage is the Page where you can see the summary of all Valuations from all subjects.
+        :param response: A Response from where the valuations should be parsed.
+        """
         super().__init__(response)
         valuation_values = self.region.xpath('.//table/tbody/tr/td/text()')
         valuation_names = self.region.xpath('.//table/tbody/tr/td/a/text()')
@@ -200,10 +267,16 @@ class ValuationOverviewPage(MainRegion):
 
 
 class ValuationPage(MainRegion):
-    def __init__(self, response):
-        super().__init__(response)
+    """
+    A Valuation Page is the Valuation Page of each individual course.
+    There you can see all points you got for assignments or quiz's.
+    """
 
-    def evaluations(self):
+    def evaluations(self) -> List[Evaluation]:
+        """
+        Extracts all Evaluations from a Page.
+        :return: A List of all Evaluations.
+        """
         if len(self.region.xpath('.//table')) == 0:
             return []
 
@@ -226,30 +299,3 @@ class ValuationPage(MainRegion):
                 Evaluation(name, url, UrlType[Path(unquote(urlparse((url)).path)).parts[3].capitalize()], grade,
                            grade_range))
         return evaluations
-
-
-def get_main_region_from_response(response):
-    tree = html.fromstring(response.content.decode('utf-8'))
-    main_region = tree.xpath('//body//div[@id="region-main-box"]')[0]
-    return main_region
-
-
-def urls_from_course(main_region):
-    all_url_imgs = main_region.xpath('.//a/img')
-    return [Url(i.getparent().xpath('./@href')[0],
-                UrlType[i.getparent().xpath('./@href')[0].split('/')[-2].capitalize()])
-            for i in all_url_imgs]
-
-
-def get_url_from_exam_page(main_region):
-    all_urls = main_region.xpath('.//a')
-    for url in all_urls:
-        link = url.xpath('./@href')[0]
-        if (u := Url(link, UrlType(link.split('/')[2].capitalize()))).type is UrlType.Quiz:
-            return u
-    else:
-        return None
-
-
-def get_course_sections(main_region):
-    return main_region.xpath('.//ul[@class=$name]/li', name='topics')

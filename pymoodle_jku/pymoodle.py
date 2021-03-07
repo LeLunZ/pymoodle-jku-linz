@@ -1,7 +1,9 @@
 import argparse
 
+import argcomplete
+
 from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils import grades, downloading, timetable
+from pymoodle_jku.Utils import grades, downloading, timetable, config
 from pymoodle_jku.Utils.login import login
 from pymoodle_jku.Utils.printing import clean_screen
 
@@ -23,11 +25,9 @@ def main():
                         help='the script will ask for no input (useful in Docker environments)')
 
     parser.add_argument('-t', '--threads', default=6, type=int,
-                        help='max amount of threads to use for crawling')
-    parser.add_argument('-u', '--username',
-                        help='jku moodle username')
-    parser.add_argument('-p', '--password',
-                        help='jku moodle password')
+                        help='max amount of threads to use for crawling. Value doesn\t persist. See config for more.')
+    parser.add_argument('-c', '--credentials', nargs=2, metavar=('username', 'password'),
+                        help='JKU username and password. (Optional, if not provided you will be asked to Enter it)')
 
     subparsers = parser.add_subparsers(help='Utilities', dest='utility')
 
@@ -54,25 +54,40 @@ def main():
 
     timeline_parser = subparsers.add_parser('timeline', help='Timeline Utility')
 
+    config_parser = subparsers.add_parser('config',
+                                          help='Changes default values. Don\'t specifying an argument will invoke iteractive mode.')
+
+    config_parser.add_argument('-d', '--directory',
+                               help='Sets default Directory for downloads, if not specified, current directory will dertermine the location. Using [--path] when using {download} will not overwrite this once, but it will not persist.')
+
+    config_parser.add_argument('-t', '--threads',
+                               help='Changes max amount of Threads used for crawling.')
+
+    config_parser.add_argument('-c', '--credentials',
+                               help='Sets the moodle credentials.')
+
+    argcomplete.autocomplete(parser)
+
     args = parser.parse_args()
-
-    username, password = None, None
-    if args.username:
-        username = args.username
-    if args.password:
-        password = args.password
-
-    client: MoodleClient = login(username=username, password=password, save_password_query=not args.quiet,
-                                 threads=args.threads)
 
     # first use tools
     if 'utility' in args:
+        if args.utility == 'config':
+            return config.main(args)
+
+        client: MoodleClient = login(credentials=args.credentials,
+                                     threads=args.threads)
+
+        if client is None:
+            raise Exception('Try again. Login Failed.')
+
         if args.utility == 'grades':
             return grades.main(client, args)
         elif args.utility == 'download':
             return downloading.main(client, args)
         elif args.utility == 'timeline':
             return timetable.main(client, args)
+
     clean_screen()
     return 0
 

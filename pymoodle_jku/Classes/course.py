@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 from typing import Union
 
-from pymoodle_jku.Utils.moodle_html_parser import CoursePage
+from pymoodle_jku.Client.html_parser import CoursePage
 
 
 @dataclass
 class Course:
+    """
+    Represents the Course object which is loaded from Moodle.
+    """
     id: int
     fullname: str
     shortname: str

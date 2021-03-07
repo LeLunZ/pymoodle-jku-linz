@@ -23,6 +23,7 @@ setup(
     download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/0.5.3.tar.gz',
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
     install_requires=[
+        'argcomplete',
         'html2markdown',
         'keyring',
         'pick',

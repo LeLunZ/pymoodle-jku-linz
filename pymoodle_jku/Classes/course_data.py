@@ -3,6 +3,9 @@ from enum import Enum
 
 
 class UrlType(Enum):
+    """
+    Represents the Ressource Type of links on Moodle.
+    """
     Streamurl = 0  # stream
     Resource = 1
     Assign = 2  # assignment
@@ -19,6 +22,9 @@ class UrlType(Enum):
 
 @dataclass
 class Url:
+    """
+    Represents a given URL on moodle.
+    """
     link: str
     type: UrlType
     course: 'CourseData' = None
@@ -26,10 +32,16 @@ class Url:
 
 @dataclass
 class Section:
+    """
+    Represents a Section of a moodle page.
+    """
     text: str
 
 
 @dataclass
 class CourseData:
+    """
+    Represents the data from a course.
+    """
     links: [Url] = field(default_factory=lambda: [])
     sections: [Section] = field(default_factory=lambda: [])

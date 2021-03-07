@@ -4,6 +4,7 @@ import time
 import traceback
 from concurrent.futures import as_completed
 from pathlib import Path
+from typing import Union, Tuple, Optional
 from urllib.parse import unquote, urlparse
 
 import iouuid
@@ -13,10 +14,16 @@ from pytube import YouTube
 from pymoodle_jku.Classes.course_data import UrlType, Url
 from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.moodle_html_parser import QuizSummary, QuizPage
+from pymoodle_jku.Client.html_parser import QuizSummary, QuizPage
 
 
-def rsuffix(suffix):
+def rsuffix(suffix) -> str:
+    """Returns a new suffix for some files.
+    Currently if will replace .m3u or .m3u8 with mp4.
+
+    :param suffix: The suffix that should be checked
+    :return: Returns the old or replaced suffix.
+    """
     if suffix.startswith('.m3u8') or suffix.startswith('.m3u'):
         return '.mp4'
     else:
@@ -25,6 +32,12 @@ def rsuffix(suffix):
 
 class DownloadManager:
     def __init__(self, urls, client: 'MoodleClient', path):
+        """Takes Objects which should be downloaded with a Moodle Client.
+
+        :param urls: A List of Objects to download. The DownloadManager will check if these are downloadable.
+        :param client: A instance of a MoodleClient, that should be logged in.
+        :param path: The directory where downloads are stored.
+        """
         self.urls = urls
         self.failed = []
         self.done = []
@@ -32,16 +45,31 @@ class DownloadManager:
         self.path = Path(path)
 
     def get_request(self, url):
+        """Sends a GET requests to download files.
+
+        :param url: Link to a file.
+        :return: Calls process_response on return.
+        """
         response = self.client.session.get(url, stream=True)
         return self.process_response(url, response)
 
     def post_request(self, url):
+        """Sends a POST request to download files.
+
+        :param url: Link to a file.
+        :return: Calls process_response on return.
+        """
         response = self.client.session.post('https://moodle.jku.at/jku/mod/folder/download_folder.php',
                                             data={'id': url.split('id=')[1].split('&')[0],
                                                   'sesskey': self.client.sesskey}, stream=True)
         return self.process_response(url, response)
 
-    def download_evaluation(self, l):
+    def download_evaluation(self, l) -> Tuple[bool, str, Optional[Path]]:
+        """Downloads a Evaluation or Url.Quiz Object.
+
+        :param l: Evaluation or Url to download.
+        :return: A Tuple that describes the download (finished,url,path).
+        """
         if type(l) is Evaluation:
             weblink = l.url
             response = self.client.session.get(l.url)
@@ -81,15 +109,19 @@ class DownloadManager:
 
         with open(self.path / filename, 'w') as f:
             f.write(output)
-        # HTML(string=html_str.decode('utf-8')).write_pdf(filename)
 
+        # HTML(string=html_str.decode('utf-8')).write_pdf(filename)
         # pdfkit.from_string(html_str.decode('utf-8'), filename)
 
         return True, weblink, self.path / filename
 
-        # return self.process_response(url, response)
-
     def _download(self, l):
+        """Checks if a Object is downloadable.
+        If yes, it will call the corresponding download method in a new Thread.
+
+        :param l: A Object to download.
+        :return: Future of the download.
+        """
         if type(l) is Evaluation or l.type is UrlType.Quiz:
             return self.client.future_session.executor.submit(self.download_evaluation, l)
         if l.type is UrlType.Resource:
@@ -107,7 +139,12 @@ class DownloadManager:
 
             return self.client.future_session.executor.submit(return_false, l)
 
-    def download(self):
+    def download(self) -> None:
+        """Downloads the urls to the path in the filesystem.
+        Finished downloads are stored in self.done as Tuple[str, Path] (url, file).
+
+        :return: Nothing
+        """
         futures = [d for l in self.urls if (d := self._download(l)) is not None]
         for f in as_completed(futures):
             try:
@@ -118,9 +155,14 @@ class DownloadManager:
                     self.failed.append(url)
             except Exception as err:
                 print(str(err))
-                traceback.print_exc()
 
-    def download_from_url(self, url):
+    def download_from_url(self, url) -> Tuple[bool, str, Optional[Path]]:
+        """Downloads a file from a url. If its a moodle url it will call process_response with the response object.
+        If its a youtube link it will download it with pytube.
+
+        :param url: Link to the Download.
+        :return: A Tuple that describes the download (finished,url,path).
+        """
         p = Path(url)
         link = url
         if '?' in p.name and '=' in p.name:  # doing this for moodle download
@@ -150,7 +192,15 @@ class DownloadManager:
         else:
             return self.process_response(url, response)
 
-    def process_response(self, url, response, path=None):
+    def process_response(self, url, response, path=None) -> Tuple[bool, str, Optional[Path]]:
+        """Processes a Response object from a given url.
+        It takes the content as chunks and writes it to the filesystem.
+
+        :param url: The url for the response.
+        :param response: A response object of a request.
+        :param path: A Path where the file should be stored.
+        :return: A Tuple that describes the download (finished,url,path).
+        """
         if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
             filename = cnt_dis.split('filename="')[1][:-1]
             size = 1024 * 1024 * 20
@@ -174,7 +224,12 @@ class DownloadManager:
             response.close()
             return False, url, None
 
-    def _download_stream(self, l: Url):
+    def _download_stream(self, l: Url) -> Tuple[bool, str, Optional[Path]]:
+        """Downloads a stream with ffmpeg to the filesystem.
+
+        :param l: A Url object to download.
+        :return: A Tuple that describes the download (finished,url,path).
+        """
         response = self.client.session.get(l.link)
         tree = html.fromstring(response.content.decode('utf-8'))
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
