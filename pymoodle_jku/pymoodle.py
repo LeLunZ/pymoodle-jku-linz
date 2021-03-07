@@ -36,6 +36,8 @@ def main():
     grades_parser.add_argument('-s', '--search', action='append',
                                help='Search for a course. Evaluations of it will be printed if found')
 
+    grades_parser.add_argument('-o', '--old', action='store_true', help='Use if you want to show finished courses.')
+
     download_parser = subparsers.add_parser('download', help='Download Utility')
 
     download_parser.add_argument('-p', '--path',
@@ -51,6 +53,9 @@ def main():
 
     download_parser.add_argument('-e', '--exams', action='store_true',
                                  help='Will download only Exams, even if they are already in urls.txt. This option exists because previously exam urls were written into urls.txt but exams werent downloaded. This option will also get removed at the end of next semester.')
+
+    download_parser.add_argument('-o', '--old', action='store_true',
+                                 help='Use if you want to download old courses. In interactive mode nothing happens.')
 
     timeline_parser = subparsers.add_parser('timeline', help='Timeline Utility')
 

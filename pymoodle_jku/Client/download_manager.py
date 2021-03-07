@@ -4,7 +4,7 @@ import time
 import traceback
 from concurrent.futures import as_completed
 from pathlib import Path
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, List
 from urllib.parse import unquote, urlparse
 
 import iouuid
@@ -42,7 +42,7 @@ class DownloadManager:
         # TODO check enddate for download
         self.urls = urls
         self.failed = []
-        self.done = []
+        self.done: List[Tuple[str, Path]] = []
         self.client = client
         self.path = Path(path)
 

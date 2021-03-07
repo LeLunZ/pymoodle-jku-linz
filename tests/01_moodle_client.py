@@ -5,7 +5,7 @@ from pathlib import Path
 import keyring
 
 from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.course_data import CourseData, Url, UrlType
+from pymoodle_jku.Classes.course_data import CourseData
 from pymoodle_jku.Client.client import MoodleClient
 
 # If you want to suppress the ResourceWarnings uncomment this:
@@ -124,27 +124,6 @@ class TestPyMoodleClient(unittest.TestCase):
 
         for course, val in valuation_generator:
             self.assertIs(type(val), list)
-
-
-class TestDownloadManager(unittest.TestCase):
-    def setUp(self):
-        self.client = MoodleClient()
-        self.download_path = Path('./downloadTest')
-        username = config['Username']
-        password = keyring.get_password('pymoodle-jku', username)
-        self.client.login(username, password)
-
-        try:
-            self.download_path.mkdir()
-        except:
-            pass
-
-    def test_simple_download(self):
-        fail_download = Url('https://test.com/afs', UrlType.Streamurl)  # some random url without video
-        dm = DownloadManager([fail_download], self.client, self.download_path)
-        dm.download()
-
-        self.assertGreater(len(dm.failed), 0)
 
 
 if __name__ == '__main__':

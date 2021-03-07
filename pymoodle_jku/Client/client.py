@@ -107,7 +107,7 @@ class MoodleClient:
     def valuation_overview(self) -> dict:
         """Loads the Overview of all valuations from Moodle.
 
-        :return: dict: Key is Course Name, Value is a string with the Points.
+        :return: Dict[int, (str, str)]: course_id, name, Points
         """
         response = self.session.get('https://moodle.jku.at/jku/grade/report/overview/index.php')
         v_page = ValuationOverviewPage(response)

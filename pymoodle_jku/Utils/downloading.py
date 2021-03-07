@@ -67,7 +67,7 @@ def main(client: MoodleClient, args):
         courses = client.courses()
 
     for c in courses:
-        cur_dir = path / (c.fullname.split(',')[1].strip())
+        cur_dir = path / (c.parse_name())
         try:
             cur_dir.mkdir()
         except:

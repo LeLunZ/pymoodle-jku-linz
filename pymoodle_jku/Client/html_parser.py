@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 from typing import Optional, List
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, parse_qs
 
 import html2markdown as html2markdown
 from lxml import html, etree
@@ -49,7 +49,7 @@ class QuizSummary(MainRegion):
                         u := Url(url,
                                  UrlType[
                                      Path(unquote(urlparse(url).path)).parts[3].capitalize()])).type is UrlType.Quiz and \
-                        Path(unquote(urlparse((url)).path)).parts[4] == 'review.php':
+                        Path(unquote(urlparse(url).path)).parts[4] == 'review.php':
                     return u
             except Exception as err:
                 # print(err)
@@ -265,8 +265,10 @@ class ValuationOverviewPage(MainRegion):
         super().__init__(response)
         valuation_values = self.region.xpath('.//table/tbody/tr/td/text()')
         valuation_names = self.region.xpath('.//table/tbody/tr/td/a/text()')
+        valuation_urls = self.region.xpath('.//table/tbody/tr/td/a/@href')
+        valuation_course_ids = [int(parse_qs(urlparse(u).query)['id'][0]) for u in valuation_urls]
 
-        self.valuation = dict(zip(valuation_names, valuation_values))
+        self.valuation = dict(zip(valuation_course_ids, zip(valuation_names, valuation_values)))
 
 
 class ValuationPage(MainRegion):
@@ -299,6 +301,6 @@ class ValuationPage(MainRegion):
             name, url, criteria = row.xpath('./th/a/text()')[0], row.xpath('./th/a/@href')[0], row.xpath('./td/text()')
             grade, grade_range = criteria[index_grade - 1], criteria[index_range - 1]
             evaluations.append(
-                Evaluation(name, url, UrlType[Path(unquote(urlparse((url)).path)).parts[3].capitalize()], grade,
+                Evaluation(name, url, UrlType[Path(unquote(urlparse(url).path)).parts[3].capitalize()], grade,
                            grade_range))
         return evaluations

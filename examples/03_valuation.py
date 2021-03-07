@@ -11,7 +11,7 @@ def valuation_overview():
     # This is parsed from this page https://moodle.jku.at/jku/grade/report/overview/index.php
     overview = client.valuation_overview()
 
-    for subject, score in overview:
+    for subject_id, (subject, score) in overview.items():
         print(f'{score}     {subject}')
 
 

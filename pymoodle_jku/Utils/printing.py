@@ -1,9 +1,9 @@
 import platform
 import subprocess
 from distutils.util import strtobool
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Tuple, Union
 
-from pick import pick
+from pick import pick, Picker
 
 
 def clean_screen():
@@ -37,28 +37,50 @@ def print_courses(client):
     print(output, flush=True)
 
 
-def print_results_table(data, header, quiet=True) -> Optional[Any]:
+def print_pick_results_table(data: List, multiselect=False) -> Optional[Any]:
     """
     Prints a interactive table.
     :param data: The data that should be printed.
-    :param header: The header which should be printed.
-    :param quiet: True when interactive mode should be off.
-    :return: The picked value if interactive mode is on, else None
+    :param multiselect: True when multiple selection should be possible.
+    :return: The picked value object.
     """
-    str_l = max(len(t) if isinstance(t, str) else len(t.fullname) for t in data.keys())
-    str_r = max(len(t) for t in data.values())
-    if quiet:
-        print(f'{header[0].ljust(str_l)} {header[1].ljust(str_r)}')
-        for c, v in data.items():
-            print(f'{c.ljust(str_l)} {v.ljust(str_r)}')
-        return None
+    lengths = []
+    reordered = list(zip(*data))
+    cols = len(reordered)
+    for i in range(cols):
+        str_l = max(len(t) for t in reordered[i])
+        lengths.append(str_l)
+    items = []
+    for i in range(len(data)):
+        line_out = f'{data[i][0].ljust(lengths[0])}'
+        for j in range(1, len(data[i])):
+            line_out += f' {data[i][j].ljust(lengths[j])}'
+        items.append(line_out)
+
+    if multiselect:
+        header = 'Press [Spacebar] to select and [Enter] to continue. [q] to exit. [m] to load more.'
+        picker = Picker(items, header, multiselect=True, min_selection_count=1)
     else:
-        header_s = 'Press [Enter] to select a Course'
-        items = list(data.items())
-        options = [f'{c.fullname.ljust(str_l)} {v.ljust(str_r)}' for c, v in items]
-        options.append('Exit')
-        option, index = pick(options, title=header_s)
-        return None if index == len(items) else items[index][0]
+        header = 'Press [Enter] to continue. [q] to exit. [m] to load more.'
+        picker = Picker(items, header)
+
+    def return_exit(_):
+        return None, -1
+
+    def return_load(_):
+        return None, -2
+
+    picker.register_custom_handler(ord('q'), return_exit)
+    picker.register_custom_handler(ord('Q'), return_exit)
+    picker.register_custom_handler(ord('m'), return_load)
+    picker.register_custom_handler(ord('M'), return_load)
+
+    if multiselect:
+        selected = picker.start()
+        return selected
+    else:
+        option, index = picker.start()
+        return option, index
 
 
 def print_array_results_table(data: List[List[str]], header: List[str]) -> None:

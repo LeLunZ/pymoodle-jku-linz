@@ -4,6 +4,10 @@ from typing import Union
 from pymoodle_jku.Client.html_parser import CoursePage
 
 
+def parse_course_name(fullname):
+    return fullname.split(',')[1].strip()
+
+
 @dataclass
 class Course:
     """
@@ -28,6 +32,9 @@ class Course:
     showshortname: bool
     coursecategory: str
     course_page: Union[CoursePage, None] = None
+
+    def parse_name(self):
+        return parse_course_name(self.fullname)
 
     def __hash__(self):
         return hash(self.id)
