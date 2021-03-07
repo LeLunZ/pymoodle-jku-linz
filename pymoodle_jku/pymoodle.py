@@ -2,11 +2,6 @@ import argparse
 
 import argcomplete
 
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils import grades, downloading, timetable, config
-from pymoodle_jku.Utils.login import login
-from pymoodle_jku.Utils.printing import clean_screen
-
 
 def main():
     parser = argparse.ArgumentParser(description='Python JKU Moodle Utility', usage='pymoodle [-options] {Utility}')
@@ -75,6 +70,13 @@ def main():
 
     args = parser.parse_args()
 
+    # imports are here because autocomplete is faster that way
+
+    from pymoodle_jku.Client.client import MoodleClient
+    from pymoodle_jku.Utils import grades, downloading, timetable, config
+    from pymoodle_jku.Utils.login import login
+    from pymoodle_jku.Utils.printing import clean_screen
+
     # first use tools
     if 'utility' in args:
         if args.utility == 'config':
@@ -85,7 +87,6 @@ def main():
 
         if client is None:
             raise Exception('Try again. Login Failed.')
-
         if args.utility == 'grades':
             return grades.main(client, args)
         elif args.utility == 'download':

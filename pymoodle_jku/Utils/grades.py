@@ -9,7 +9,6 @@ from pymoodle_jku.Utils.printing import print_pick_results_table, clean_screen, 
 def main(client: MoodleClient, args: Namespace):
     now = int(time.time())
     old_filter = lambda c, t=now: c.enddate >= t
-
     if args.search:
         filter_exp = lambda c, search=args.search: any(s.lower() in c.fullname.lower() for s in search)
         if not args.old:
@@ -20,7 +19,7 @@ def main(client: MoodleClient, args: Namespace):
         for c, eval in evals:
             print(f' {c.fullname}')
             if len(eval) == 0:
-                print('\nNo Evaluations')
+                print('No Evaluations\n')
             else:
                 print_array_results_table([(f'{e.name}', f'{e.grade}', f'{e.grade_range}') for e in eval],
                                           ['Name', 'Points', 'Range'])
@@ -33,6 +32,7 @@ def main(client: MoodleClient, args: Namespace):
         exit(0)
 
     valuations = client.valuation_overview()
+    original_valuations = valuations
     if not args.old:
         courses = client.courses(load_pages=False, filter_exp=old_filter)
         courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
@@ -43,9 +43,10 @@ def main(client: MoodleClient, args: Namespace):
         courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
         valuations = dict([(key, val) for key, val in valuations.items()])
     if len(courses) == 0:
-        print('No Courses to Display. Try [-o] for older courses.')
+        print('No Courses to display. Try [-o] for older courses.')
         exit(0)
     if args.quiet:
+        clean_screen()
         print_array_results_table([(f'{parse_course_name(val[0])}', f'{val[1]}') for key, val in valuations.items()],
                                   ['Course', 'Points'])
     else:
@@ -57,6 +58,7 @@ def main(client: MoodleClient, args: Namespace):
             else:
                 vals.append([c.parse_name(), '-'])
         while True:
+            clean_screen()
             element, index = print_pick_results_table(vals)
             if index == -1:
                 exit(0)
@@ -68,8 +70,8 @@ def main(client: MoodleClient, args: Namespace):
                     courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
                     vals = []
                     for c in courses:
-                        if c.id in valuations.keys():
-                            vals.append([c.parse_name(), valuations[c.id][1]])
+                        if c.id in original_valuations.keys():
+                            vals.append([c.parse_name(), original_valuations[c.id][1]])
                         else:
                             vals.append([c.parse_name(), '-'])
                 continue
@@ -82,4 +84,3 @@ def main(client: MoodleClient, args: Namespace):
             print_array_results_table([(f'{e.name}', f'{e.grade}', f'{e.grade_range}') for e in evaluations],
                                       ['Name', 'Points', 'Range'])
             enter_press = input('\nPress Enter to continue')
-            clean_screen()

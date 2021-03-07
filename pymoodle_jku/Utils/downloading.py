@@ -1,13 +1,14 @@
 import logging
+import time
 from pathlib import Path
 from typing import Union, List, Tuple
-
-from pick import pick
 
 from pymoodle_jku.Classes.course_data import Url
 from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Client.client import MoodleClient
 from pymoodle_jku.Client.download_manager import DownloadManager
+from pymoodle_jku.Utils.config import config
+from pymoodle_jku.Utils.printing import print_pick_results_table
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,15 @@ def write_urls(dir_: Path, urls: List[str]) -> None:
 
 
 def main(client: MoodleClient, args):
-    path = Path('./' if args.path is None else args.path)
+    path = args.path or config['Path']
+    path = Path('./' if path is None else path)
+    now = time.time()
+
+    def filter_new(c, t=now, old=args.old):
+        if not old:
+            return c.enddate >= t
+        else:
+            return True
 
     if args.search and args.interactive:
         print('Search parameters can\'t be used when using interactive search mode.')
@@ -54,19 +63,35 @@ def main(client: MoodleClient, args):
         if args.quiet:
             print('Interactive mode can\'t be used while being quiet mode.')
             exit(0)
-        courses = list(client.courses(load_pages=False))
-        selected = pick(list(map(lambda c: f'{c.id}: {c.fullname}', courses)), multiselect=True, min_selection_count=0)
-        if len(selected) == 0:
+        loaded_more = False
+        courses = list(client.courses(load_pages=False, filter_exp=filter_new))
+        if len(courses) == 0:
+            print('No Courses to download. Try [-o] for older courses.')
             exit(0)
-        picked_course_ids = [courses[idx].id for v, idx in selected]
-        courses = client.courses(load_pages=courses, filter_exp=lambda c, s=tuple(picked_course_ids): c.id in s)
+        while True:
+            selected = print_pick_results_table([(c.parse_name(),) for c in courses], multiselect=True)
+            if type(selected) is tuple:
+                option, index = selected
+                if index == -1:
+                    exit(0)
+                if index == -2:
+                    if not args.old and not loaded_more:
+                        loaded_more = True
+                        courses = client.courses(load_pages=False)
+            else:
+                break
+        picked_courses = [courses[idx] for v, idx in selected]
+        courses = client.courses(load_pages=picked_courses)
     elif args.search is not None:
         courses = client.courses(
-            filter_exp=lambda c, search=args.search: any(s.lower() in c.fullname.lower() for s in search))
+            filter_exp=lambda c, search=args.search: any(
+                s.lower() in c.fullname.lower() for s in search) and filter_new(c))
     else:
-        courses = client.courses()
+        courses = client.courses(filter_exp=filter_new)
 
+    count = 0
     for c in courses:
+        count += 1
         cur_dir = path / (c.parse_name())
         try:
             cur_dir.mkdir()
@@ -91,6 +116,9 @@ def main(client: MoodleClient, args):
         del dm
 
         debug(f'done with {c.shortname}')
+
+    if count == 0:
+        print('No Courses to download. Try [-o] for older courses.')
 
 
 if __name__ == "__main__":

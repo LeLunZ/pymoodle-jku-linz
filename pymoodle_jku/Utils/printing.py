@@ -1,9 +1,9 @@
 import platform
 import subprocess
 from distutils.util import strtobool
-from typing import Optional, Any, List, Tuple, Union
+from typing import Optional, Any, List
 
-from pick import pick, Picker
+from pick import Picker
 
 
 def clean_screen():
