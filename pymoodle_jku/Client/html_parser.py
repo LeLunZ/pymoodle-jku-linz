@@ -150,8 +150,11 @@ class CoursePage(MainRegion):
         Returns all the sections of a CoursePage. Sections are normally different Topics.
         :return: A List of lxml HTML objects.
         """
-        # TODO check return value
-        return self.region.xpath('.//ul[@class=$name]/li', name='topics')
+        sections = []
+        for section in self.region.xpath('.//ul[@class=$name]/li', name='topics'):
+            subs = section.xpath('./node()')
+            sections.append(convert_elements(subs))
+        return sections
 
     def urls(self) -> List[Url]:
         """
