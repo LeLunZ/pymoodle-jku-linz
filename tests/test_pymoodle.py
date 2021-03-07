@@ -1,53 +1,50 @@
 import unittest
+from getpass import getpass
 from pathlib import Path
 
 import keyring
 
 from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.course_data import CourseData
+from pymoodle_jku.Classes.course_data import CourseData, Url, UrlType
 from pymoodle_jku.Client.client import MoodleClient
-
 
 # If you want to suppress the ResourceWarnings uncomment this:
 # import warnings
 # warnings.filterwarnings("ignore", category=ResourceWarning)
 # These warnings are an indication that everything is working correctly and nothing is going wrong.
+from pymoodle_jku.Client.download_manager import DownloadManager
+from pymoodle_jku.Utils.config import config, set_new_user
 
 
 class TestPyMoodleClientLogin(unittest.TestCase):
     def setUp(self):
+        # setting up environment
         self.client = MoodleClient()
-        pymoodle_conf = Path.home() / '.pymoodle'
-        if not pymoodle_conf.is_file():
+        if (username := config['Username']) is None:
             username = input('username: ')
-            password = input('password: ')
-            pymoodle_conf.write_text(username)
-            keyring.set_password('pymoodle-jku', username, password)
+        password = keyring.get_password('pymoodle-jku', username)
+        if password is None:
+            password = getpass()
+            set_new_user((username, password))
 
     def test_login(self):
-        pymoodle_conf = Path.home() / '.pymoodle'
-        if pymoodle_conf.is_file():
-            username = pymoodle_conf.read_text().strip()
-            password = keyring.get_password('pymoodle-jku', username)
-        else:
-            return self.fail('Please setup pymoodle login credentials')
         auth = False
         count = 0
         while not auth:
             if count > 5:
                 return self.fail('more than 5 login tries failed.')
             try:
-                auth = self.client.login(username, password)
+                password = keyring.get_password('pymoodle-jku', config['Username'])
+                auth = self.client.login(username=config['Username'], password=password)
+            except Exception as err:
                 count += 1
-            except Exception:
                 print('Login failed, trying again...')
 
 
 class TestPyMoodleClient(unittest.TestCase):
     def setUp(self):
         self.client = MoodleClient()
-        pymoodle_conf = Path.home() / '.pymoodle'
-        username = pymoodle_conf.read_text().strip()
+        username = config['Username']
         password = keyring.get_password('pymoodle-jku', username)
         self.client.login(username, password)
 
@@ -84,17 +81,70 @@ class TestPyMoodleClient(unittest.TestCase):
 
         self.assertGreater(len(all_courses), 0)
 
+    def test_courses_reload_page(self):
+        courses = list(self.client.courses(load_pages=False))
+        courses_2 = list(self.client.courses(load_pages=courses))
+
+        for c in courses_2:
+            course = next(c_2 for c_2 in courses if c.id == c_2.id)
+            self.assertIs(c, course)
+            self.assertIsNotNone(c.course_page)
+
+    def test_courses_filter(self):
+        courses_generator = self.client.courses(load_pages=False, filter_exp=lambda c: 'VL' in c.fullname)
+        for c in courses_generator:
+            self.assertTrue('VL' in c.fullname)
+
     def test_calendar(self):
-        pass
+        calendar_events = self.client.calendar()
+        for t in calendar_events:
+            # Testing for some basics
+            self.assertIsNotNone(t)
+            self.assertIsNotNone(t.id)
+            self.assertIsNotNone(t.course_id)
+            self.assertIsNotNone(t.name)
+            self.assertIsNotNone(t.timestart)
 
     def test_valuation_overview(self):
         overview = self.client.valuation_overview()
         self.assertIs(type(overview), dict)
 
-    def test_detailed_valuation(self):
+    def test_detailed_single_valuation(self):
+        courses = list(self.client.courses(load_pages=False))
+        to_load = courses[0]
+        valuation_generator = list(self.client.single_valuation(to_load))
+
+        self.assertIsNotNone(valuation_generator)
+
+    def test_detailed_multi_valuation(self):
         valuation_generator = self.client.multi_valuation()
 
-        self.assertGreater(len(list(valuation_generator)), 0)
+        vals = list(valuation_generator)
+        self.assertGreater(len(vals), 0)
+
+        for course, val in valuation_generator:
+            self.assertIs(type(val), list)
+
+
+class TestDownloadManager(unittest.TestCase):
+    def setUp(self):
+        self.client = MoodleClient()
+        self.download_path = Path('./downloadTest')
+        username = config['Username']
+        password = keyring.get_password('pymoodle-jku', username)
+        self.client.login(username, password)
+
+        try:
+            self.download_path.mkdir()
+        except:
+            pass
+
+    def test_simple_download(self):
+        fail_download = Url('https://test.com/afs', UrlType.Streamurl)  # some random url without video
+        dm = DownloadManager([fail_download], self.client, self.download_path)
+        dm.download()
+
+        self.assertGreater(len(dm.failed), 0)
 
 
 if __name__ == '__main__':

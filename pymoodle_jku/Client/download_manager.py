@@ -38,6 +38,8 @@ class DownloadManager:
         :param client: A instance of a MoodleClient, that should be logged in.
         :param path: The directory where downloads are stored.
         """
+
+        # TODO check enddate for download
         self.urls = urls
         self.failed = []
         self.done = []
@@ -115,29 +117,37 @@ class DownloadManager:
 
         return True, weblink, self.path / filename
 
+    def _decide_download_source(self, l):
+        """
+        Calls the corresponding method for the object l if l is downloadable.
+        """
+        try:
+            if type(l) is Evaluation or l.type is UrlType.Quiz:
+                return self.download_evaluation(l)
+            if l.type is UrlType.Resource:
+                return self.get_request(l.link)
+            elif l.type is UrlType.Folder:
+                return self.post_request(l.link)
+            elif l.type is UrlType.Streamurl:
+                return self._download_stream(l)
+            elif l.type is UrlType.Url:
+                return self.download_from_url(l.link)
+            else:
+                # return false because if we later add the datatype we still want to download it.
+                def return_false(l):
+                    return False, l.link, None
+
+                return return_false(l)
+        except Exception:  # Never let any exception go outside of this. So that we can always return a failed download.
+            return False, l.link, None
+
     def _download(self, l):
-        """Checks if a Object is downloadable.
-        If yes, it will call the corresponding download method in a new Thread.
+        """Adds the download to a ThreadPool.
 
         :param l: A Object to download.
         :return: Future of the download.
         """
-        if type(l) is Evaluation or l.type is UrlType.Quiz:
-            return self.client.future_session.executor.submit(self.download_evaluation, l)
-        if l.type is UrlType.Resource:
-            return self.client.future_session.executor.submit(self.get_request, l.link)
-        elif l.type is UrlType.Folder:
-            return self.client.future_session.executor.submit(self.post_request, l.link)
-        elif l.type is UrlType.Streamurl:
-            return self.client.future_session.executor.submit(self._download_stream, l)
-        elif l.type is UrlType.Url:
-            return self.client.future_session.executor.submit(self.download_from_url, l.link)
-        else:
-            # return false because if we later add the datatype we still want to download it.
-            def return_false(l):
-                return False, l.link, None
-
-            return self.client.future_session.executor.submit(return_false, l)
+        return self.client.future_session.executor.submit(self._decide_download_source, l)
 
     def download(self) -> None:
         """Downloads the urls to the path in the filesystem.
@@ -224,6 +234,19 @@ class DownloadManager:
             response.close()
             return False, url, None
 
+    def _download_stream_with_ffmpeg(self, url, filename):
+        process = subprocess.Popen(
+            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
+             url,
+             '-c', 'copy',
+             self.path / filename])
+        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
+            process.communicate('y\n')
+            process.communicate('y\n')
+            process.communicate('y\n')
+        return_code = process.wait(timeout=30 * 60)
+        return return_code
+
     def _download_stream(self, l: Url) -> Tuple[bool, str, Optional[Path]]:
         """Downloads a stream with ffmpeg to the filesystem.
 
@@ -236,17 +259,10 @@ class DownloadManager:
         link = video.get('src')
         url = link
         filename = iouuid.generate_id(self.path / Path(unquote(url)).name, rsuffix=rsuffix, size=2)
-        process = subprocess.Popen(
-            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
-             url,
-             '-c', 'copy',
-             self.path / filename])
-        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
-            process.communicate('y\n')
-            process.communicate('y\n')
-            process.communicate('y\n')
-        return_code = process.wait(timeout=30 * 60)
+        return_code = self._download_stream_with_ffmpeg(url, filename)
+        if return_code != 0:
+            return_code = self._download_stream_with_ffmpeg(url, filename)  # try a second time if download fails.
         if return_code != 0:
             return False, l.link, None
-        time.sleep(0.5)
+        time.sleep(0.5)  # dont remove it was important in some way
         return True, l.link, self.path / filename

@@ -115,6 +115,7 @@ class MoodleClient:
 
     def single_valuation(self, course: Course) -> List[Evaluation]:
         """Returns a List of Evaluation Objects for the given Course.
+        CoursePage not required.
 
         :param course: Course Object for which the Evaluation should be loaded.
         :return:
@@ -126,8 +127,9 @@ class MoodleClient:
         return v_page.evaluations()
 
     def multi_valuation(self, courses: Optional[Union[List[Course], Iterator[Course]]] = None) -> Generator[
-        Tuple[Course, List[Evaluation]]]:
+        Tuple[Course, List[Evaluation]], None, None]:
         """Returns a List of Tuples with each Course and the corresponding evaluations.
+        CoursePage not required.
 
         :param courses: A List of courses to load the evaluation from. Course.course_page doesn't need to be loaded.
         :return: Generator[Tuple[Course, List[Evaluation]]] The Course is the same Object as the input and doesn't change.
@@ -153,7 +155,7 @@ class MoodleClient:
                 pass
 
     def courses(self, load_pages: Union[bool, List[Course]] = True, filter_exp: Callable[[Course], bool] = None) -> \
-            Generator[Course]:
+            Generator[Course, None, None]:
         """Loads all the moodle Courses.
 
         :param load_pages: If True the course.course_page will be loaded. This takes more time, as each page needs to
