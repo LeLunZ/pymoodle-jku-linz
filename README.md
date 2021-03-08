@@ -124,6 +124,7 @@ I have set up multiple [unittests](./tests), to ensure that the next releases wo
 ### Dependencies
 
 - argcomplete: Is for commandline auto completion.
+- cryptography: To encrypt cookies/session key with the users password.
 - html2markdown: Converts HTML from Moodle to Markdown
 - [keyring](https://pypi.org/project/keyring/): Saves your password secure locally. (on windows called Credential
   Locker)
