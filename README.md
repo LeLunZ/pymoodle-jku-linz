@@ -11,7 +11,7 @@ It's also a python library, which you can use in your project.
 
 [Install](#Install)
 
-[Terminal Application](#CommandlineScripts)
+[Terminal Application](#Commandline Scripts)
 
 [Python Package](#PythonPackage)
 
