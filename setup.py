@@ -14,7 +14,7 @@ setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     packages=['pymoodle_jku', 'pymoodle_jku.Classes', 'pymoodle_jku.Client', 'pymoodle_jku.Utils'],
-    version='1.0.8',
+    version='1.0.9',
     license='BSD 3-Clause',
     description='A client for the moodle page of JKU Linz.',
     author='LeLunZ',
