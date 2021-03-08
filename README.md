@@ -20,6 +20,8 @@ You can do all this from the commandline and much more:
 
 `pip3 install -U pymoodle-jku `
 
+To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. Can also be done after installing pymoodle.
+
 To get autocompletion working add this to your bash .bashrc/.zshrc/....:
 
 `eval "$(register-python-argcomplete pymoodle)"`
@@ -27,9 +29,6 @@ To get autocompletion working add this to your bash .bashrc/.zshrc/....:
 If you are using fish/Tcsh or another shell, have a closer
 look [here](https://github.com/kislyuk/argcomplete#zsh-support).
 
-## Requirements
-
-To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed.
 
 ## Commandline Scripts
 
