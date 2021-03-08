@@ -15,6 +15,7 @@ from pymoodle_jku.Classes.course_data import UrlType, Url
 from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Client.client import MoodleClient
 from pymoodle_jku.Client.html_parser import QuizSummary, QuizPage
+from pymoodle_jku.Utils.printing import print_exc
 
 
 def rsuffix(suffix) -> str:
@@ -96,7 +97,7 @@ class DownloadManager:
             d_path = self.path / name
             try:
                 d_path.mkdir()
-            except:
+            except (FileNotFoundError, OSError):
                 pass
 
             for i in images:
@@ -136,7 +137,10 @@ class DownloadManager:
                     return False, l.link, None
 
                 return return_false(l)
-        except Exception:  # Never let any exception go outside of this. So that we can always return a failed download.
+        except (SystemExit, KeyboardInterrupt, GeneratorExit):
+            raise
+        except Exception as er:
+            # Never let any exception go outside of this. So that we can always return a failed download.
             # traceback.print_exc()
             if type(l) is Evaluation:
                 return False, l.url, None
@@ -164,8 +168,10 @@ class DownloadManager:
                     self.done.append((url, file))
                 else:
                     self.failed.append(url)
-            except Exception as err:
-                print(str(err))
+            except (SystemExit, KeyboardInterrupt, GeneratorExit):
+                raise
+            except Exception as e:
+                print_exc(e)
 
     def download_from_url(self, url) -> Tuple[bool, str, Optional[Path]]:
         """Downloads a file from a url. If its a moodle url it will call process_response with the response object.

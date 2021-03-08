@@ -29,9 +29,9 @@ def get_all_downloads(dir_: Path, links: List[Union[Url, Evaluation]]) -> Tuple[
     try:
         urls = url_list.read_text().splitlines()
         f = list(filter(lambda l: (l.link if type(l) is Url else l.url) not in urls, links))
-        return (f, urls)
-    except:
-        return (links, [])
+        return f, urls
+    except FileNotFoundError:
+        return links, []
 
 
 def write_urls(dir_: Path, urls: List[str]) -> None:
@@ -92,7 +92,7 @@ def main(client: MoodleClient, args):
         cur_dir = path / (c.parse_name())
         try:
             cur_dir.mkdir()
-        except:
+        except (FileNotFoundError, OSError):
             pass
 
         valuations = client.single_valuation(c)
@@ -124,7 +124,4 @@ if __name__ == "__main__":
     # The folder must exist already
     # and the path must be relative to where you start the process
     # or you can specify an absolut path
-    try:
-        pass
-    except Exception as err:
-        debug(str(err))
+    pass

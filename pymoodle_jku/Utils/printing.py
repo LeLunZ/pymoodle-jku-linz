@@ -6,6 +6,11 @@ from typing import Optional, Any, List
 from pick import Picker
 
 
+def print_exc(exception):
+    print('Please Notify LeLunZ on the JKU Discord Channel:')
+    print(str(exception))
+
+
 def clean_screen():
     """
     Clears the terminal screen.

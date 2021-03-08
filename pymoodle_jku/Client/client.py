@@ -15,6 +15,7 @@ from pymoodle_jku.Classes.events import Event
 from pymoodle_jku.Classes.exceptions import LoginError
 from pymoodle_jku.Client.html_parser import LoginPage, MyPage, \
     ValuationOverviewPage, CoursePage, ValuationPage
+from pymoodle_jku.Utils.printing import print_exc
 
 
 def requests_retry_session(
@@ -169,9 +170,10 @@ class MoodleClient:
             try:
                 result = f.result()
                 yield result.data
+            except (SystemExit, KeyboardInterrupt, GeneratorExit):
+                raise
             except Exception as e:
-                # dont yield anything
-                pass
+                print_exc(e)
 
     def courses(self, load_pages: Union[bool, List[Course]] = True, filter_exp: Callable[[Course], bool] = None) -> \
             Generator[Course, None, None]:
@@ -222,9 +224,10 @@ class MoodleClient:
             try:
                 result = f.result()
                 yield result.data
+            except (SystemExit, KeyboardInterrupt, GeneratorExit):
+                raise
             except Exception as e:
-                # dont yield anything
-                pass
+                print_exc(e)
 
     def calendar(self, limit=26) -> List[Event]:
         """Gets the calendar entries. (Assignments, Exams etc.)

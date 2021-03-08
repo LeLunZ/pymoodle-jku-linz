@@ -19,7 +19,7 @@ class TestDownloadManager(unittest.TestCase):
 
         try:
             self.download_path.mkdir()
-        except:
+        except (FileNotFoundError, OSError):
             pass
 
     def test_simple_download(self):

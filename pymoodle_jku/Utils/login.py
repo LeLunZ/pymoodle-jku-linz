@@ -30,7 +30,7 @@ def save_client(client):
             token = f.encrypt(pickle.dumps((cookies, sesskey, userid)))
             config['Session'] = token.decode()
             write_config()
-    except Exception:
+    except (pickle.PicklingError, KeyError, InvalidToken):
         pass
 
 
@@ -94,7 +94,7 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
                 auth = client.login(username, password)
         except KeyboardInterrupt:
             return None
-        except:
+        except LoginError:
             count += 1
             print('Login failed, trying again...')
             debug('Login failed, trying again...')

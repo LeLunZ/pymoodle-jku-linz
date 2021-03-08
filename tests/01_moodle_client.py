@@ -6,6 +6,7 @@ import keyring
 
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.course_data import CourseData
+from pymoodle_jku.Classes.exceptions import LoginError
 from pymoodle_jku.Client.client import MoodleClient
 
 # If you want to suppress the ResourceWarnings uncomment this:
@@ -36,7 +37,7 @@ class TestPyMoodleClientLogin(unittest.TestCase):
             try:
                 password = keyring.get_password('pymoodle-jku', config['Username'])
                 auth = self.client.login(username=config['Username'], password=password)
-            except Exception as err:
+            except LoginError as err:
                 count += 1
                 print('Login failed, trying again...')
 

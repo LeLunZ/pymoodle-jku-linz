@@ -11,7 +11,7 @@ def download():
     test_dir = Path('./downloadTest')
     try:
         test_dir.mkdir()
-    except:
+    except (FileNotFoundError, OSError):
         pass
 
     for c in courses:
