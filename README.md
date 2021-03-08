@@ -7,7 +7,7 @@ It's also a python library, which you can use in your project.
 
 ##### Table of Contents  
 
-[Description](#Description)
+[Description](#Description) </br>
 [Install](#Install)
 [Terminal Application](#Commandline-Scripts)
 [Python Package](#Python-Package)
