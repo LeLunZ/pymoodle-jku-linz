@@ -139,6 +139,7 @@ class DownloadManager:
 
                 return return_false(l)
         except Exception:  # Never let any exception go outside of this. So that we can always return a failed download.
+            traceback.print_exc()
             if type(l) is Evaluation:
                 return False, l.url, None
             return False, l.link, None
