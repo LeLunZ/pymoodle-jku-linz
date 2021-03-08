@@ -46,7 +46,6 @@ def main(client: MoodleClient, args: Namespace):
         print('No Courses to display. Try [-o] for older courses.')
         exit(0)
     if args.quiet:
-        clean_screen()
         print_array_results_table([(f'{parse_course_name(val[0])}', f'{val[1]}') for key, val in valuations.items()],
                                   ['Course', 'Points'])
     else:

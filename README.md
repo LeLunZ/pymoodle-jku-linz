@@ -98,29 +98,26 @@ There are examples for:
 - Moodle Calendar
 - Downloads
 
+## Good To Know
 
-## Features
+### Unittests
 
-- Login to your personal moodle account
-    - passwords don't get stored anywhere, only send to the moodle (actually sso) server
-- List all courses
-    - query a specific course
-    - download data from a course (PDFS/Zips...)
-    - download streams (you need ffmpeg installed locally and added to your PATH)
-    - get all Links on a page (with the [Link Type](pymoodle_jku/Classes/course_data.py))
-    - get all html from a section of a course
-- Get [information about courses](pymoodle_jku/Classes/course.py)
-    - startdate/enddate
-    - fullname/shortname
-    - id
-    - etc.
-- Downloads are streamed
-    - that means pymoodle take chunks of the request and writes it to the filesystem (which means less RAM usage)
-        - to compare that: downloading: 4 x 2GB Videos into memory uses 8 GB. Streaming it and chunking it onto the
-          filesystem takes not more than a few hundred MB.
-- Get your Timeline
-- Exception is thrown if you get logged out. (So catch it and call login again...)
-- Every request I implemented is directly from the official moodle page. (Took a very long time to debug)
+I have set up multiple [unittests](./tests), to ensure that the next releases won't introduce bugs.
+
+### Dependencies
+
+- argcomplete: Is for commandline auto completion.
+- html2markdown: Converts HTML from Moodle to Markdown
+- [keyring](https://pypi.org/project/keyring/): Saves your password secure locally. (on windows called Credential
+  Locker)
+- io-uuid: One of my own packages. Is for creating unique filenames.
+- lxml: Is to parse HTML.
+- pick: A simple Terminal Picker.
+- pytube: For downloads from youtube.
+- sty: Colors for the terminal. Still needs to be implemented.
+- urllib3: for parsing urls and so stuff.
+- requests: for sending requests
+- requests-futures: A Wrapper around future to send asynchrones requests.
 
 ## Unsupported
 
@@ -135,7 +132,3 @@ If you want to add something, create an issue and do a pull request.
 
 * clones this repo
 * `pip3 install -r requirements.txt`
-
-### Unittests
-
-### Examples
