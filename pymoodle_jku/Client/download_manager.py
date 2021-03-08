@@ -109,7 +109,7 @@ class DownloadManager:
 
         filename = iouuid.generate_id(self.path / f'{name}.md', size=2)
 
-        with open(self.path / filename, 'w') as f:
+        with open(self.path / filename, 'w', encoding="utf-8") as f:
             f.write(output)
 
         # HTML(string=html_str.decode('utf-8')).write_pdf(filename)
