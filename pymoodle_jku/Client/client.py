@@ -2,7 +2,7 @@ import json
 import time
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Union, List, Callable, Tuple, Generator, Iterator, Optional
+from typing import Union, List, Callable, Tuple, Generator, Iterator, Optional, Type
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -12,7 +12,7 @@ from urllib3 import Retry
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Classes.events import Event
-from pymoodle_jku.Classes.exceptions import LoginError
+from pymoodle_jku.Classes.exceptions import NotLoggedInError, LoginError
 from pymoodle_jku.Client.html_parser import LoginPage, MyPage, \
     ValuationOverviewPage, CoursePage, ValuationPage
 from pymoodle_jku.Utils.printing import print_exc
@@ -74,23 +74,18 @@ def requests_retry_session_async(
 
 
 class MoodleClient:
-    def login_with_old_session(self, cookies, sesskey, userid) -> bool:
+    def login_with_old_session(self, cookies, sesskey, userid):
         """Tries old cookies and sesskey.
         """
         self.session.cookies.clear()
         self.sesskey = sesskey
         self.userid = userid
         self.session.cookies.update(cookies)
-        self.session.cookies.update({'MoodleSessionjkuSessionCookie': 'htgb5l622nsa8qeg91efs661i1sju',
-                                     '_shibsession_bd99d1079fe4a6d86fa5dbc67b1311ea7f3a8afff80fcfbd1e7025e948340ea97d': '_node01070jugjrd1ycu0d827efx6eh142846a8.node0'})
-        try:
-            response = self.session.get('https://moodle.jku.at/jku/my/')
-        except LoginError:
-            self.sesskey = None
-            self.userid = None
-            self.session.cookies.clear()
-            return False
-        return True
+
+    def clear_client(self):
+        self.sesskey = None
+        self.userid = None
+        self.session.cookies.clear()
 
     def login(self, username, password) -> bool:
         """Retrieves tokens and cookies for moodle.
@@ -101,27 +96,30 @@ class MoodleClient:
         :raises Exception: if Login doesn't work.
         """
         if username is None or password is None:
-            raise ValueError
-        self.session.cookies.clear()
-        response = self.session.get('https://moodle.jku.at/jku/login/index.php')
-        headers = {'Content-type': 'application/x-www-form-urlencoded'}
-        url = response.url
-        # session_id = url.split('jsessionid=')[1].split('?')[0]
-        response = self.session.post(url, data={'j_username': username, 'j_password': password,
-                                                '_eventId_proceed': 'Login'}, headers=headers)
+            raise LoginError('Provide Username or Password')
+        try:
+            self.session.cookies.clear()
+            response = self.session.get('https://moodle.jku.at/jku/login/index.php')
+            headers = {'Content-type': 'application/x-www-form-urlencoded'}
+            url = response.url
+            # session_id = url.split('jsessionid=')[1].split('?')[0]
+            response = self.session.post(url, data={'j_username': username, 'j_password': password,
+                                                    '_eventId_proceed': 'Login'}, headers=headers)
 
-        # parsing Login page
-        l_page = LoginPage.from_response(response)
-        response = self.session.post(l_page.action, data=l_page.data, headers=headers)
+            # parsing Login page
+            l_page = LoginPage.from_response(response)
+            response = self.session.post(l_page.action, data=l_page.data, headers=headers)
 
-        response = self.session.get('https://moodle.jku.at/')
-        m_page = MyPage.from_response(response)
+            response = self.session.get('https://moodle.jku.at/')
+            m_page = MyPage.from_response(response)
 
-        self.sesskey, self.userid = m_page.sesskey, m_page.userid
-        cookies = self.session.cookies.get_dict()
-        self.session.cookies.clear()
-        self.session.cookies.set('MoodleSessionjkuSessionCookie', cookies['MoodleSessionjkuSessionCookie'])
-        self.session.cookies.set(f'_shibsession_{cookies["shib_idp_session"]}', f'_{cookies["JSESSIONID"]}')
+            self.sesskey, self.userid = m_page.sesskey, m_page.userid
+            cookies = self.session.cookies.get_dict()
+            self.session.cookies.clear()
+            self.session.cookies.set('MoodleSessionjkuSessionCookie', cookies['MoodleSessionjkuSessionCookie'])
+            self.session.cookies.set(f'_shibsession_{cookies["shib_idp_session"]}', f'_{cookies["JSESSIONID"]}')
+        except (NotLoggedInError, IndexError, KeyError):
+            return False
         return True
 
     def valuation_overview(self) -> dict:
@@ -268,9 +266,25 @@ class MoodleClient:
 
         :raises Exception: If user isn't logged in.
         """
-        if ('enroll' in r.url and 'enroll' not in r.request.url) or (
-                'login' in r.url and 'login' not in r.request.url) or '<title>jku: Dashboard (GUEST)</title>' in r.text:
-            raise LoginError('Please login.')
+        if r.headers.get('Content-Type') == 'application/json; charset=utf-8' or r.headers.get(
+                'Content-Type') == 'application/json':
+            j = r.json()
+            if type(j) is list and type(j[0]) is dict and 'error' in j[0] and j[0]['error'] is True:
+                raise NotLoggedInError('Please Login')
+        else:
+            if '<a href="https://moodle.jku.at/jku/login/index.php">' in r.text and r.is_redirect:
+                raise NotLoggedInError('Please Login')
+            if '<title>jku: Dashboard (GUEST)</title>' in r.text:
+                raise NotLoggedInError('Please login.')
+
+        def check_url(url, redirect_url, redirect):
+            if ('enroll' in redirect_url and (('enroll' not in url) or redirect)) or (
+                    'login' in redirect_url and (('login' not in url) or redirect)):
+                raise NotLoggedInError('Please login.')
+
+        # check_url(r.request.url, r.url, r.is_redirect)
+        # for h in r.history:
+        #    check_url(r.request.url, h.url, h.is_redirect)
         return r
 
     def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=4)):

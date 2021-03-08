@@ -1,51 +1,16 @@
 from getpass import getpass
 from pathlib import Path
-import configparser
 
 import keyring
 from keyring.errors import PasswordDeleteError
 from pick import pick
+
+from pymoodle_jku.Utils.config_data import config, set_new_user, write_config
+from pymoodle_jku.Utils.login import relogin
 from pymoodle_jku.Utils.printing import clean_screen, yn_question
 
-cp = configparser.ConfigParser(allow_no_value=True)
-config_file = Path.home() / '.pymoodle'
 
-if config_file.is_file():
-    cp.read(config_file)
-else:
-    cp['DEFAULT'] = {'Threads': '6', 'Path': None, 'Username': None, 'SaveQuestion': 'True', 'Session': None}
-
-config = cp['DEFAULT']
-
-
-def write_config() -> None:
-    """
-    Writes the config to the .pymoodle file.
-    :return:
-    """
-    with open(config_file, 'w') as f:
-        cp.write(f)
-
-
-def set_new_user(credentials) -> None:
-    """
-    Saves new user credentials.
-    User is stored in the config.
-    Password is stored in the keyring.
-    :param credentials: a tuple of (username, password)
-    :return:
-    """
-    username, password = credentials
-    if config['Username'] is not None:
-        try:
-            keyring.delete_password('pymoodle-jku', config['Username'])
-        except PasswordDeleteError:
-            pass
-    config['Session'] = None
-    config['Username'] = username
-    keyring.set_password('pymoodle-jku', username, password)
-
-
+@relogin
 def main(args):
     interactive = True
     if args.threads:

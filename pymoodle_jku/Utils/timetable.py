@@ -2,11 +2,13 @@ import logging
 from datetime import datetime
 
 from pymoodle_jku.Client.client import MoodleClient
+from pymoodle_jku.Utils.login import relogin
 from pymoodle_jku.Utils.printing import print_array_results_table
 
 logger = logging.getLogger(__name__)
 
 
+@relogin
 def main(client: MoodleClient, args):
     timetable = client.calendar(limit=args.limit)
 

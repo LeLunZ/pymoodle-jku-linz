@@ -72,12 +72,11 @@ def main():
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-
     # imports are here because autocomplete is faster that way
 
     from pymoodle_jku.Client.client import MoodleClient
     from pymoodle_jku.Utils import grades, downloading, timetable, config
-    from pymoodle_jku.Utils.login import login
+    from pymoodle_jku.Utils import login
     from pymoodle_jku.Utils.printing import clean_screen
     from pymoodle_jku.Utils.printing import print_pick_results_table
 
@@ -96,8 +95,9 @@ def main():
         if args.utility == 'config':
             return config.main(args)
 
-        client: MoodleClient = login(credentials=args.credentials,
-                                     threads=args.threads)
+        client: MoodleClient = login.login(credentials=args.credentials,
+                                           threads=args.threads)
+
         if client is None:
             raise Exception('Try again. Login Failed.')
         if args.utility == 'grades':

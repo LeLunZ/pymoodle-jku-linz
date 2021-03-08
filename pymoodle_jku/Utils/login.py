@@ -1,5 +1,6 @@
 import atexit
 import base64
+import functools
 import logging
 import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -7,23 +8,49 @@ from getpass import getpass
 from typing import Optional
 
 import keyring
+from argparse import Namespace
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from pymoodle_jku.Classes.exceptions import LoginError
+from pymoodle_jku.Classes.exceptions import NotLoggedInError
 from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.config import config, write_config
+from pymoodle_jku.Utils.config_data import config, write_config
 from pymoodle_jku.Utils.printing import yn_question
 
 logger = logging.getLogger(__name__)
 
+registered = False
 f: Fernet = None
 
 
-def save_client(client):
+def relogin(func):
+    @functools.wraps(func)
+    def wrapped(client: MoodleClient, args: Namespace):
+        try:
+            return func(client, args)
+        except NotLoggedInError:
+            if f is not None:
+                client.clear_client()
+                config['Session'] = None
+                write_config()
+                new_client = login(args.credentials, args.threads, client)
+                if new_client is None:
+                    raise
+                else:
+                    return func(client, args)
+            else:
+                raise
+
+    return wrapped
+
+
+def save_client(client: MoodleClient):
+    """
+    Saves the Cookies and important data encrypted in the filesystem.
+    """
     try:
-        if config['Username'] is not None:
+        if f is not None:
             cookies = client.session.cookies.get_dict()
             sesskey = client.sesskey
             userid = client.userid
@@ -35,34 +62,61 @@ def save_client(client):
 
 
 def load_client(client):
-    if config['Username'] is not None:
+    """
+    Decodes the encrypted cookies and data from the filesystem.
+    """
+    if f is not None:
         token = config['Session']
         cookies, sesskey, userid = pickle.loads(f.decrypt(token.encode()))
-        return client.login_with_old_session(cookies, sesskey, userid)
+        client.login_with_old_session(cookies, sesskey, userid)
+        return True
     return False
 
 
-def debug(msg):
-    logger.debug(f'UniJob: {msg}')
+def setup_encryption(password):
+    global f
+    if f is None:
+        salt = b'pymoodle-jku'
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
+        key = base64.urlsafe_b64encode(kdf.derive(bytes(password.encode())))
+        f = Fernet(key)
 
 
-def login(credentials, threads: int = None) -> Optional[MoodleClient]:
+def register_atexit(client):
+    global registered
+    if registered is False:
+        atexit.register(lambda: save_client(client))
+        registered = True
+
+
+def login(credentials, threads: int = None, client: MoodleClient = None) -> Optional[MoodleClient]:
     """
-    Tries to Login the user multiple times.
+    Tries to Login the user multiple times or uses a .
 
     :param credentials: Tuple[str, str] with (username, password).
     :param threads: the amount of threads to use for crawling.
+    :param client: a prepared MoodleClient.
     :return: A Moodle Client if login worked, else None
     """
-    client = MoodleClient(pool_executor=ThreadPoolExecutor(max_workers=threads or config.getint('Threads')))
+    client_prepared = client is not None
+    client = client or MoodleClient(pool_executor=ThreadPoolExecutor(max_workers=threads or config.getint('Threads')))
 
     new_credentials = False
     username, password = credentials or (config.get('Username'), None)
-    loaded_from_keyring = False
     if credentials is None and username is not None:
         new_credentials = False
         password = keyring.get_password('pymoodle-jku', username)
-        loaded_from_keyring = True
+
+        setup_encryption(password)
+        register_atexit(client)
+        if not client_prepared:
+            try:
+                auth = load_client(client)
+            except (KeyError, pickle.UnpicklingError, InvalidToken):
+                auth = False
+            if auth:
+                return client
+
     elif credentials is None:
         # no user configured
         new_credentials = True
@@ -73,31 +127,16 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
 
     auth = False
     count = 0
-    # create Fernet
-    salt = b'pymoodle-jku'
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
-    key = base64.urlsafe_b64encode(kdf.derive(bytes(password.encode())))
-    global f
-    f = Fernet(key)
-
     while not auth:
         if count > 2:
             return None
         try:
-            if loaded_from_keyring:
-                try:
-                    auth = load_client(client)
-                except (KeyError, pickle.UnpicklingError, InvalidToken):
-                    auth = False
-                loaded_from_keyring = False
-            else:
-                auth = client.login(username, password)
+            auth = client.login(username, password)
         except KeyboardInterrupt:
             return None
-        except LoginError:
+        except NotLoggedInError:
             count += 1
             print('Login failed, trying again...')
-            debug('Login failed, trying again...')
     if config.getboolean('SaveQuestion') and new_credentials:
         print('Login Worked ;) Moodle Console mode confirmed!')
         save_password = yn_question(
@@ -105,8 +144,10 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
         if save_password:
             config['Username'] = username
             keyring.set_password('pymoodle-jku', username, password)
+            setup_encryption(password)
+            register_atexit(client)
         else:
             config['SaveQuestion'] = 'False'
         write_config()
-    atexit.register(lambda: save_client(client))
+    register_atexit(client)
     return client

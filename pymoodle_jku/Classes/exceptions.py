@@ -1,2 +1,6 @@
+class NotLoggedInError(Exception):
+    """Raised if user isn't logged in."""
+
+
 class LoginError(Exception):
-    """Raised if Login failed or user isn't logged in."""
+    """Raised when login fails"""

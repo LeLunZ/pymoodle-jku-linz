@@ -8,6 +8,7 @@ from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Client.client import MoodleClient
 from pymoodle_jku.Client.download_manager import DownloadManager
 from pymoodle_jku.Utils.config import config
+from pymoodle_jku.Utils.login import relogin
 from pymoodle_jku.Utils.printing import print_pick_results_table
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def write_urls(dir_: Path, urls: List[str]) -> None:
     url_list.write_text('\n'.join(urls))
 
 
+@relogin
 def main(client: MoodleClient, args):
     path = args.path or config['Path']
     path = Path('./' if path is None else path)

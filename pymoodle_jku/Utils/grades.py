@@ -3,9 +3,11 @@ from argparse import Namespace
 
 from pymoodle_jku.Classes.course import Course, parse_course_name
 from pymoodle_jku.Client.client import MoodleClient
+from pymoodle_jku.Utils.login import relogin
 from pymoodle_jku.Utils.printing import print_pick_results_table, clean_screen, print_array_results_table
 
 
+@relogin
 def main(client: MoodleClient, args: Namespace):
     now = int(time.time())
     old_filter = lambda c, t=now: c.enddate >= t
