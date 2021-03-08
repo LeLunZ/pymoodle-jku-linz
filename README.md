@@ -1,3 +1,6 @@
+
+https://user-images.githubusercontent.com/31982496/110263795-059fc980-7fb8-11eb-8724-4ded9c08ca09.mp4
+
 # PyMoodle-JKU Linz
 
 A local python client for accessing the jku moodle page. Passwords aren't sent anywhere except to the official moodle
@@ -75,7 +78,7 @@ mode you can press *m* to load old courses.
 later. Its currently only implemented so that you don't have to download everything else again.
 
 ### Grades
-![grades](./assets/grades.mp4)
+https://user-images.githubusercontent.com/31982496/110263822-1a7c5d00-7fb8-11eb-847c-6c4682411b5e.mp4
 
 Grades will launch automatically in interactive mode. It can give you a short overview about your grades, or you can
 look at the specific evaluations from a course. Just like {download} it's also possible to use `-o` for old courses
