@@ -13,7 +13,7 @@ def main(all_parser):
             process = subprocess.Popen(['ffmpeg', '-h'], stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
             return_code = process.wait(timeout=5)
             option, index = print_pick_results_table(
-                [('config',), ('grades',), ('download',), ('timeline',), ('Overview',)])
+                [('config',), ('grades',), ('download',), ('timeline',), ('Overview',)], load_more=False)
             if index >= 0:
                 clean_screen()
                 all_parser[index].print_help()
@@ -21,7 +21,7 @@ def main(all_parser):
             option, index = print_pick_results_table(
                 [('Install FFmpeg and add it to the $PATH to download Videos from Moodle',), ('config',),
                  ('grades',),
-                 ('download',), ('timeline',), ('Overview',), ])
+                 ('download',), ('timeline',), ('Overview',), ], load_more=False)
 
             if index >= 1:
                 index = index - 1

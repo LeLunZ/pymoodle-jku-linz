@@ -42,7 +42,7 @@ def print_courses(client):
     print(output, flush=True)
 
 
-def print_pick_results_table(data: List, multiselect=False) -> Optional[Any]:
+def print_pick_results_table(data: List, multiselect=False, load_more=True) -> Optional[Any]:
     """
     Prints a interactive table.
     :param data: The data that should be printed.
@@ -63,10 +63,12 @@ def print_pick_results_table(data: List, multiselect=False) -> Optional[Any]:
         items.append(line_out)
 
     if multiselect:
-        header = 'Press [Space] to select and [Enter] to continue. [q] to exit. [m] to load more from old semesters.'
+        header = 'Press [Space] to select and [Enter] to continue. [q] to exit.' + (
+            ' [m] to load more from old semesters.' if load_more else '')
         picker = Picker(items, header, multiselect=True, min_selection_count=1)
     else:
-        header = 'Press [Enter] to continue. [q] to exit. Press [m] to load more from old semesters.'
+        header = 'Press [Enter] to continue. [q] to exit.' + (
+            ' Press [m] to load more from old semesters.' if load_more else '')
         picker = Picker(items, header)
 
     def return_exit(_):
