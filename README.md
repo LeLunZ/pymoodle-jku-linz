@@ -1,7 +1,9 @@
 # PyMoodle-JKU Linz
 
-A local python client for accessing the jku moodle page. No Passwords are sent anywhere except
-to https://moodle.jku.at/jku/login/index.php!
+A local python client for accessing the jku moodle page. Passwords aren't sent anywhere except to the official moodle
+page https://moodle.jku.at/jku/login/index.php! Optionally you can store them in the local system keyring.
+
+It's also a python library, which you can use in your project.
 
 ## Overview
 
@@ -29,7 +31,7 @@ look [here](https://github.com/kislyuk/argcomplete#zsh-support).
 
 To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed.
 
-## Usage Commandline Script
+## Commandline Scripts
 
 The commandline script is called **pymoodle**.
 
@@ -42,6 +44,10 @@ With **pymoodle** you can call these Utilities:
 
 You will find everything you need if you call:
 `pymoodle --help` or `pymoodle {Utility} --help`
+
+Credentials won't be stored anywhere. If the username/password is entered while running Utilities (not with `-c`), you
+will be asked if you want to store your password in the keyring. The Keyring is a local Password Storage where all
+passwords are securely stored.
 
 ### Config
 
@@ -70,29 +76,28 @@ later. Its currently only implemented so that you don't have to download everyth
 
 ### Grades
 
-Grades will launch automatically in interactive mode. Just like {download} it's also possible to use `-o` for old
-courses or `-s` to search for courses.
-
-### Timeline 
-
-Timeline 
-
-## Examples
-
-There are two examples:
-
-### Downloading
-
-Open the [downloading.py](pymoodle_jku/Utils/downloading.py) and run it. It will download all possible files to your
-disk.
-
-It will also store a txt file with all downloaded urls. So you can run it multiple times, and it will only download
-stuff once.
+Grades will launch automatically in interactive mode. It can give you a short overview about your grades, or you can
+look at the specific evaluations from a course. Just like {download} it's also possible to use `-o` for old courses
+or `-s` to search for courses.
 
 ### Timeline
 
-Run [timetable.py](pymoodle_jku/Utils/timetable.py) and get the full json response from your timetable. (In a next
-release this will be a object, with type hints not a json)
+Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
+limit of events to show (`--limits 26`).
+
+## Python Package
+
+There are multiple examples how to use the PyMoodle package. Just look in the [examples](./examples) folder and start
+with [moodle_client.py](./examples/moodle_client.py).
+
+There are examples for:
+
+- Login
+- Courses (Data/Section/Urls from a course)
+- Valuation of a course.
+- Moodle Calendar
+- Downloads
+
 
 ## Features
 
