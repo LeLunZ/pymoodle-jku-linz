@@ -63,10 +63,10 @@ def print_pick_results_table(data: List, multiselect=False) -> Optional[Any]:
         items.append(line_out)
 
     if multiselect:
-        header = 'Press [Spacebar] to select and [Enter] to continue. [q] to exit. [m] to load more.'
+        header = 'Press [Space] to select and [Enter] to continue. [q] to exit. [m] to load more from old semesters.'
         picker = Picker(items, header, multiselect=True, min_selection_count=1)
     else:
-        header = 'Press [Enter] to continue. [q] to exit. [m] to load more.'
+        header = 'Press [Enter] to continue. [q] to exit. Press [m] to load more from old semesters.'
         picker = Picker(items, header)
 
     def return_exit(_):

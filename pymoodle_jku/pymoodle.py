@@ -2,6 +2,8 @@ import argparse
 
 import argcomplete
 
+from pymoodle_jku.Utils import basic
+
 
 def main():
     parser = argparse.ArgumentParser(description='Python JKU Moodle Utility', usage='pymoodle [-options] {Utility}')
@@ -55,7 +57,7 @@ def main():
 
     timeline_parser = subparsers.add_parser('timeline', help='Timeline Utility')
 
-    timeline_parser.add_argument('-l', '--limit', default=26, type=int, help='The max amount of Events to show.')
+    timeline_parser.add_argument('-l', '--limit', default=15, type=int, help='The max amount of Events to show.')
 
     config_parser = subparsers.add_parser('config',
                                           help='Changes default values. Don\'t specifying an argument will invoke iteractive mode.')
@@ -77,20 +79,12 @@ def main():
     from pymoodle_jku.Client.client import MoodleClient
     from pymoodle_jku.Utils import grades, downloading, timetable, config
     from pymoodle_jku.Utils import login
-    from pymoodle_jku.Utils.printing import clean_screen
-    from pymoodle_jku.Utils.printing import print_pick_results_table
 
     # first use tools
     if 'utility' not in args or args.utility is None:
-        index = -2
-        while index == -2:
-            option, index = print_pick_results_table(
-                [('Basics',), ('config',), ('grades',), ('download',), ('timeline',)])
-            all_parser = [parser, config_parser, grades_parser, download_parser, timeline_parser]
-            if index >= 0:
-                clean_screen()
-                all_parser[index].print_help()
-        return 0
+        all_parser = [config_parser, grades_parser, download_parser, timeline_parser, parser]
+        return basic.main(all_parser)
+
     elif 'utility' in args and args.utility is not None:
         if args.utility == 'config':
             return config.main(args)
