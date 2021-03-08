@@ -73,12 +73,15 @@ def main(args):
                 set_new_user((username, password))
             elif idx == 1:
                 storage = input('Directory: ')
-                storage_path = Path(storage).absolute()
-                if not storage_path.is_dir() and not storage_path.parent.is_dir():
-                    storage_path.mkdir()
-                elif not storage_path.is_dir():
-                    raise Exception('Directory doesn\'t exist.')
-                config['Path'] = str(storage_path)
+                if storage == '':
+                    config['Path'] = None
+                else:
+                    storage_path = Path(storage).resolve()
+                    if not storage_path.is_dir() and storage_path.parent.is_dir():
+                        storage_path.mkdir()
+                    elif not storage_path.is_dir():
+                        raise Exception('Directory doesn\'t exist.')
+                    config['Path'] = str(storage_path)
             elif idx == 2:
                 threads = int(input('Max Threads: '))
                 config['Threads'] = str(threads)
