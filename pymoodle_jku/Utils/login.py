@@ -56,7 +56,7 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
     if config.getboolean('SaveQuestion') and new_credentials:
         print('Login Worked ;) Moodle Console mode confirmed!')
         save_password = yn_question(
-            'Do you want to store your password in your local keyring: (y/n)')
+            'Do you want to store your password in your local keyring (y/n): ')
         if save_password:
             config['Username'] = username
             keyring.set_password('pymoodle-jku', username, password)

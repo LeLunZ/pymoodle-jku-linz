@@ -1,4 +1,3 @@
-from distutils.util import strtobool
 from getpass import getpass
 from pathlib import Path
 import configparser
