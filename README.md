@@ -83,6 +83,8 @@ or `-s` to search for courses.
 
 ### Timeline
 
+![timeline](./assets/timeline.png)
+
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
 limit of events to show (`--limits 26`).
 
