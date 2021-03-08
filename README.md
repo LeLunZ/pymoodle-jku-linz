@@ -1,55 +1,81 @@
 # PyMoodle-JKU Linz
 
-A python client for accessing the jku moodle page.
+A local python client for accessing the jku moodle page. No Passwords are sent anywhere except
+to https://moodle.jku.at/jku/login/index.php!
+
+## Overview
+
+What can you do with PyMoodle? A Short Overview.
+
+You can do all this from the commandline and much more:
+
+- Download files from moodle videos/pdf/folder/etc. and even **Exams** as markdown
+- List all your grades without needing to open the browser and search moodle
+- List your timetable from moodle.
+- Password of moodle can be stored in the local system keyring. No need to enter it every time!
 
 ## Install
 
-`pip3 install pymoodle-jku -U`
+`pip3 install -U pymoodle-jku `
 
-### install for testing
+To get autocompletion working add this to your bash .bashrc/.zshrc/....:
 
-* clones this repo
-* `pip3 install -r requirements.txt`
+`eval "$(register-python-argcomplete pymoodle)"`
+
+If you are using fish/Tcsh or another shell, have a closer
+look [here](https://github.com/kislyuk/argcomplete#zsh-support).
 
 ## Requirements
 
 To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed.
 
-## Usage of commandline script
+## Usage Commandline Script
 
-After installation:
+The commandline script is called **pymoodle**.
 
-`pip3 install pymoodle-jku -U`
+With **pymoodle** you can call these Utilities:
 
-just run:
+- download
+- grades
+- timeline
+- config
 
-`pymoodle -d ./Courses`
+You will find everything you need if you call:
+`pymoodle --help` or `pymoodle {Utility} --help`
 
-with the `-i` option you can specify which courses to download. If no ids are given, you will be shown all ids and
-courses and be promted to enter ids.
+### Config
 
-> usage: pymoodle.py [-h] [-d DOWNLOAD] [-c] [-i [IDS]] [-u USERNAME]
-> [-p PASSWORD]
->
-> Download moodle files
->
-> optional arguments:
->
-> -h, --help        show this help message and exit
->
-> -d DOWNLOAD, --download DOWNLOAD
-> path to download directory
->
-> -c, --courses	    list all courses with its ids
->
-> -i [IDS], --ids [IDS]
-> list of course ids to download (seperated by comma 52623,38747,27364). If no id is specified but -i is given you can enter the ids after starting the script (ids will be displayed)
->
-> -u USERNAME, --username USERNAME
-> jku moodle username
->
-> -p PASSWORD, --password PASSWORD
-> jku moodle password
+With the config utility you can configure your environment. You can either specify arguments that should be changed (
+see `pymoodle config --help`) or launch the config in interactive mode like this: `pymoodle config`
+
+Its **recommended** to configure your environment once if you want. You can also set a default download Path. (which
+needs to exist before downloading.)
+
+### Download
+
+With the download utility you can download files and exams from moodle. There are multiple ways to select a course. If
+nothing is specified it will download everything. But you can also launch Download in interactive mode like
+this: `pymoodle download -i`
+
+Or it's possible to search and download courses, which includes the word "Logic" or "Daten" like
+this: `pymoodle download -s Logic -s Daten`
+
+To download stuff from old courses specify the `-o` option, else only running courses will be considered. In interactive
+mode you can press *m* to load old courses.
+
+**Only for people who used PyMoodle before**
+
+**Exams** are now downloaded too. To force a redownload of only exams use the `-e` option. This future will be removed
+later. Its currently only implemented so that you don't have to download everything else again.
+
+### Grades
+
+Grades will launch automatically in interactive mode. Just like {download} it's also possible to use `-o` for old
+courses or `-s` to search for courses.
+
+### Timeline 
+
+Timeline 
 
 ## Examples
 
@@ -96,6 +122,15 @@ release this will be a object, with type hints not a json)
 - Downloading of Zoom streams of jku.zoom.us isn't supported for now. If somebody get it working please feel free to do
   a merge request.
 
-## Support
+## Support/Community
 
-If you want to add something, create an issue and do a pull request. 
+If you want to add something, create an issue and do a pull request.
+
+### Install for testing
+
+* clones this repo
+* `pip3 install -r requirements.txt`
+
+### Unittests
+
+### Examples

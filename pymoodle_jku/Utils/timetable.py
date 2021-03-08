@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(client: MoodleClient, args):
-    timetable = client.calendar()
+    timetable = client.calendar(limit=args.limit)
 
     objects = {}
     for t in timetable:

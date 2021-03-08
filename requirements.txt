@@ -1,10 +1,11 @@
+argcomplete==1.12.2
 html2markdown==0.1.7
 keyring==23.0.0
 io-uuid==0.0.5
 lxml==4.6.2
 pick==1.0.0
 pytube==10.5.3
-argcomplete==1.12.2
+sty==1.0.0-rc.1
 urllib3==1.26.3
 requests==2.25.1
 requests-futures==1.0.0

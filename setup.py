@@ -30,6 +30,7 @@ setup(
         'pytube',
         'lxml',
         'urllib3',
+        'sty',
         'requests',
         'requests-futures',
         'io-uuid'

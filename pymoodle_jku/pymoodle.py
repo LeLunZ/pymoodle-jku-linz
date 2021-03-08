@@ -29,7 +29,7 @@ def main():
     grades_parser = subparsers.add_parser('grades', help='Grading Utility')
 
     grades_parser.add_argument('-s', '--search', action='append',
-                               help='Search for a course. Evaluations of it will be printed if found')
+                               help='Search for courses with given string in its name. Evaluations of it will be printed if found')
 
     grades_parser.add_argument('-o', '--old', action='store_true', help='Use if you want to show finished courses.')
 
@@ -42,7 +42,7 @@ def main():
     #                              help='Searches for courses to download. If no input is specified it will asks the user to select courses.')
 
     download_parser.add_argument('-s', '--search', action='append',
-                                 help='Searches for courses to download. Can\'t be used with [-i]')
+                                 help='Search and downloads courses with given string in its name. Can\'t be used with [-i]')
     download_parser.add_argument('-i', '--interactive', action='store_true',
                                  help='You can pick courses later. Can\'t be used with [-s] or in quiet mode [-q].')
 
@@ -50,9 +50,11 @@ def main():
                                  help='Will download only Exams, even if they are already in urls.txt. This option exists because previously exam urls were written into urls.txt but exams werent downloaded. This option will also get removed at the end of next semester.')
 
     download_parser.add_argument('-o', '--old', action='store_true',
-                                 help='Use if you want to download old courses. In interactive mode nothing happens.')
+                                 help='Use if you want to download old courses.')
 
     timeline_parser = subparsers.add_parser('timeline', help='Timeline Utility')
+
+    timeline_parser.add_argument('-l', '--limit', default=26, type=int, help='The max amount of Events to show.')
 
     config_parser = subparsers.add_parser('config',
                                           help='Changes default values. Don\'t specifying an argument will invoke iteractive mode.')
