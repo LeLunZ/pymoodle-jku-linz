@@ -26,5 +26,6 @@ def main(client: MoodleClient, args):
         print_array_results_table(output, ['Name', 'Type', 'Date', 'Link'])
         print()
 
-    if __name__ == "__main__":
-        pass
+
+if __name__ == "__main__":
+    pass
