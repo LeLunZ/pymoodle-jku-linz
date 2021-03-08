@@ -18,6 +18,7 @@ class UrlType(Enum):
     Grouptool = 9
     Forum = 10
     Checkmark = 11
+    Wiki = 11
 
 
 @dataclass

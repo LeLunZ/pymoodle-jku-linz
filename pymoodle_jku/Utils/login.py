@@ -7,10 +7,11 @@ from getpass import getpass
 from typing import Optional
 
 import keyring
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from pymoodle_jku.Classes.exceptions import LoginError
 from pymoodle_jku.Client.client import MoodleClient
 from pymoodle_jku.Utils.config import config, write_config
 from pymoodle_jku.Utils.printing import yn_question
@@ -86,7 +87,7 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
             if loaded_from_keyring:
                 try:
                     auth = load_client(client)
-                except:
+                except (KeyError, pickle.UnpicklingError, InvalidToken):
                     auth = False
                 loaded_from_keyring = False
             else:

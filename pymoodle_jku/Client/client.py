@@ -12,6 +12,7 @@ from urllib3 import Retry
 from pymoodle_jku.Classes.course import Course
 from pymoodle_jku.Classes.evaluation import Evaluation
 from pymoodle_jku.Classes.events import Event
+from pymoodle_jku.Classes.exceptions import LoginError
 from pymoodle_jku.Client.html_parser import LoginPage, MyPage, \
     ValuationOverviewPage, CoursePage, ValuationPage
 
@@ -83,7 +84,7 @@ class MoodleClient:
                                      '_shibsession_bd99d1079fe4a6d86fa5dbc67b1311ea7f3a8afff80fcfbd1e7025e948340ea97d': '_node01070jugjrd1ycu0d827efx6eh142846a8.node0'})
         try:
             response = self.session.get('https://moodle.jku.at/jku/my/')
-        except Exception:
+        except LoginError:
             self.sesskey = None
             self.userid = None
             self.session.cookies.clear()
@@ -266,7 +267,7 @@ class MoodleClient:
         """
         if ('enroll' in r.url and 'enroll' not in r.request.url) or (
                 'login' in r.url and 'login' not in r.request.url) or '<title>jku: Dashboard (GUEST)</title>' in r.text:
-            raise Exception('Please login.')
+            raise LoginError('Please login.')
         return r
 
     def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=4)):
