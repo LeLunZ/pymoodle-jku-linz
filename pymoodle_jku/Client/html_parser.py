@@ -162,7 +162,7 @@ class CoursePage(MainRegion):
         :return: A List of URLs.
         """
         all_url_imgs = self.region.xpath('.//a/img')
-        return [Url(i.getparent().xpath('./@href')[0],
+        return [Url(str(i.getparent().xpath('./@href')[0]),
                     UrlType[url_p[3].capitalize()])
                 for i in all_url_imgs if
                 (url_p := Path(unquote(urlparse((url := i.getparent().xpath('./@href')[0])).path)).parts)[2] == 'mod']
@@ -301,6 +301,6 @@ class ValuationPage(MainRegion):
             name, url, criteria = row.xpath('./th/a/text()')[0], row.xpath('./th/a/@href')[0], row.xpath('./td/text()')
             grade, grade_range = criteria[index_grade - 1], criteria[index_range - 1]
             evaluations.append(
-                Evaluation(name, url, UrlType[Path(unquote(urlparse(url).path)).parts[3].capitalize()], grade,
+                Evaluation(name, str(url), UrlType[Path(unquote(urlparse(url).path)).parts[3].capitalize()], grade,
                            grade_range))
         return evaluations
