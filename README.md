@@ -8,13 +8,21 @@ It's also a python library, which you can use in your project.
 ##### Table of Contents  
 
 [Description](#Description)
-[Install](#emphasis)
-[Terminal Application](#Commandline Scripts)
-[Python Package](#Python Package)
-[Dependencies and Unittests](#Good To Know)
+
+[Install](#Install)
+
+[Terminal Application](#CommandlineScripts)
+
+[Python Package](#PythonPackage)
+
+[Dependencies and Unittests](##GoodToKnow)
+
 [Unsupported](#Unsupported)
+
 [Contribution](#Contribution)
+
 [Planned](#Planned)
+
 
 ## Description
 
