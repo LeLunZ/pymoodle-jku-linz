@@ -28,7 +28,7 @@ def get_all_downloads(dir_: Path, links: List[Union[Url, Evaluation]]) -> Tuple[
     url_list = dir_ / 'urls.txt'
     try:
         urls = url_list.read_text().splitlines()
-        f = list(filter(lambda l: l.link if type(l) is Url else l.url not in urls, links))
+        f = list(filter(lambda l: (l.link if type(l) is Url else l.url) not in urls, links))
         return (f, urls)
     except:
         return (links, [])
