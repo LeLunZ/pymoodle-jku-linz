@@ -112,7 +112,7 @@ class QuizPage(MainRegion):
         """
         questions = zip(self.info, self.questions)
 
-        summary = html2markdown.convert(d_utf8(etree.tostring(self.summary)))
+        summary = html2markdown.convert(d_utf8(etree.tostring(self.summary))) + '\n'
 
         # markdownify isnt parsing tables
         # tomd is removing a lot of stuff ()
