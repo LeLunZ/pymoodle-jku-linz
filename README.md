@@ -5,7 +5,18 @@ page https://moodle.jku.at/jku/login/index.php! Optionally you can store them in
 
 It's also a python library, which you can use in your project.
 
-## Overview
+##### Table of Contents  
+
+[Description](#Description)
+[Install](#emphasis)
+[Terminal Application](#Commandline Scripts)
+[Python Package](#Python Package)
+[Dependencies and Unittests](#Good To Know)
+[Unsupported](#Unsupported)
+[Contribution](#Contribution)
+[Planned](#Planned)
+
+## Description
 
 What can you do with PyMoodle? A Short Overview.
 
@@ -126,7 +137,7 @@ I have set up multiple [unittests](./tests), to ensure that the next releases wo
 - Downloading of Zoom streams of jku.zoom.us isn't supported for now. If somebody get it working please feel free to do
   a merge request.
 
-## Support/Community
+## Contribution
 
 If you want to add something, create an issue and do a pull request.
 
