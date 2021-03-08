@@ -56,13 +56,16 @@ def main(client: MoodleClient, args):
         else:
             return True
 
-    if args.search and args.interactive:
-        print('Search parameters can\'t be used when using interactive search mode.')
-        exit(0)
-    if args.interactive is True:
-        if args.quiet:
-            print('Interactive mode can\'t be used while being quiet mode.')
-            exit(0)
+    if args.search and args.all:
+        print('Search parameters can\'t be used when using all mode.')
+        return 0
+    elif args.search is not None:
+        courses = client.courses(
+            filter_exp=lambda c, search=args.search: any(
+                s.lower() in c.fullname.lower() for s in search) and filter_new(c))
+    elif args.all or args.quiet:
+        courses = client.courses(filter_exp=filter_new)
+    else:
         loaded_more = False
         courses = list(client.courses(load_pages=False, filter_exp=filter_new))
         if len(courses) == 0:
@@ -82,12 +85,6 @@ def main(client: MoodleClient, args):
                 break
         picked_courses = [courses[idx] for v, idx in selected]
         courses = client.courses(load_pages=picked_courses)
-    elif args.search is not None:
-        courses = client.courses(
-            filter_exp=lambda c, search=args.search: any(
-                s.lower() in c.fullname.lower() for s in search) and filter_new(c))
-    else:
-        courses = client.courses(filter_exp=filter_new)
 
     count = 0
     for c in courses:

@@ -43,8 +43,9 @@ def main():
 
     download_parser.add_argument('-s', '--search', action='append',
                                  help='Search and downloads courses with given string in its name. Can\'t be used with [-i]')
-    download_parser.add_argument('-i', '--interactive', action='store_true',
-                                 help='You can pick courses later. Can\'t be used with [-s] or in quiet mode [-q].')
+
+    download_parser.add_argument('-a', '--all', action='store_true',
+                                 help='Downloads all courses of the current semester. If run with [-o] all courses from older semesters get downloaded.')
 
     download_parser.add_argument('-e', '--exams', action='store_true',
                                  help='Will download only Exams, even if they are already in urls.txt. This option exists because previously exam urls were written into urls.txt but exams werent downloaded. This option will also get removed at the end of next semester.')
@@ -78,9 +79,20 @@ def main():
     from pymoodle_jku.Utils import grades, downloading, timetable, config
     from pymoodle_jku.Utils.login import login
     from pymoodle_jku.Utils.printing import clean_screen
+    from pymoodle_jku.Utils.printing import print_pick_results_table
 
     # first use tools
-    if 'utility' in args:
+    if 'utility' not in args or args.utility is None:
+        index = -2
+        while index == -2:
+            option, index = print_pick_results_table(
+                [('Basics',), ('config',), ('grades',), ('download',), ('timeline',)])
+            all_parser = [parser, config_parser, grades_parser, download_parser, timeline_parser]
+            if index >= 0:
+                clean_screen()
+                all_parser[index].print_help()
+        return 0
+    elif 'utility' in args and args.utility is not None:
         if args.utility == 'config':
             return config.main(args)
 
@@ -95,9 +107,8 @@ def main():
             return downloading.main(client, args)
         elif args.utility == 'timeline':
             return timetable.main(client, args)
-
-    clean_screen()
-    return 0
+    else:
+        return 0
 
 
 if __name__ == '__main__':
