@@ -30,7 +30,9 @@ def main(all_parser):
             elif index == 0:
                 webbrowser.open('https://ffmpeg.org/download.html')
 
-    print('\n\nTo try out the different Utilities run one of these and follow the steps to log in:')
+    if index != -1:
+        print('\n')
+    print('To try out the different Utilities run one of these and follow the steps to log in:')
     print(fg.li_red + 'pymoodle grades' + fg.rs)
     print(fg.li_blue + 'pymoodle timeline' + fg.rs)
     print(fg.li_green + 'pymoodle download' + fg.rs)
