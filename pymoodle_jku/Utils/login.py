@@ -1,16 +1,44 @@
+import atexit
+import base64
 import logging
+import pickle
 from concurrent.futures.thread import ThreadPoolExecutor
 from getpass import getpass
-from pathlib import Path
 from typing import Optional
 
 import keyring
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from pymoodle_jku.Client.client import MoodleClient
 from pymoodle_jku.Utils.config import config, write_config
 from pymoodle_jku.Utils.printing import yn_question
 
 logger = logging.getLogger(__name__)
+
+f: Fernet = None
+
+
+def save_client(client):
+    try:
+        if config['Username'] is not None:
+            cookies = client.session.cookies.get_dict()
+            sesskey = client.sesskey
+            userid = client.userid
+            token = f.encrypt(pickle.dumps((cookies, sesskey, userid)))
+            config['Session'] = token.decode()
+            write_config()
+    except Exception:
+        pass
+
+
+def load_client(client):
+    if config['Username'] is not None:
+        token = config['Session']
+        cookies, sesskey, userid = pickle.loads(f.decrypt(token.encode()))
+        return client.login_with_old_session(cookies, sesskey, userid)
+    return False
 
 
 def debug(msg):
@@ -29,9 +57,11 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
 
     new_credentials = False
     username, password = credentials or (config.get('Username'), None)
+    loaded_from_keyring = False
     if credentials is None and username is not None:
         new_credentials = False
         password = keyring.get_password('pymoodle-jku', username)
+        loaded_from_keyring = True
     elif credentials is None:
         # no user configured
         new_credentials = True
@@ -42,11 +72,25 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
 
     auth = False
     count = 0
+    # create Fernet
+    salt = b'pymoodle-jku'
+    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
+    key = base64.urlsafe_b64encode(kdf.derive(bytes(password.encode())))
+    global f
+    f = Fernet(key)
+
     while not auth:
         if count > 2:
             return None
         try:
-            auth = client.login(username, password)
+            if loaded_from_keyring:
+                try:
+                    auth = load_client(client)
+                except:
+                    auth = False
+                loaded_from_keyring = False
+            else:
+                auth = client.login(username, password)
         except KeyboardInterrupt:
             return None
         except:
@@ -63,8 +107,5 @@ def login(credentials, threads: int = None) -> Optional[MoodleClient]:
         else:
             config['SaveQuestion'] = 'False'
         write_config()
+    atexit.register(lambda: save_client(client))
     return client
-
-# neuer user ohne username password -> SaveQuestion True/ new credentials True
-# neuer user mit username -> SaveQuestion True/new credentials True
-# neuer user mit password -> SaveQuestion True/new credentials True

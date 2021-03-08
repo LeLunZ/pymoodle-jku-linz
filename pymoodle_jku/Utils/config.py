@@ -13,7 +13,7 @@ config_file = Path.home() / '.pymoodle'
 if config_file.is_file():
     cp.read(config_file)
 else:
-    cp['DEFAULT'] = {'Threads': '6', 'Path': None, 'Username': None, 'SaveQuestion': 'True'}
+    cp['DEFAULT'] = {'Threads': '6', 'Path': None, 'Username': None, 'SaveQuestion': 'True', 'Session': None}
 
 config = cp['DEFAULT']
 
@@ -41,6 +41,7 @@ def set_new_user(credentials) -> None:
             keyring.delete_password('pymoodle-jku', config['Username'])
         except PasswordDeleteError:
             pass
+    config['Session'] = None
     config['Username'] = username
     keyring.set_password('pymoodle-jku', username, password)
 

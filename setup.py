@@ -24,6 +24,7 @@ setup(
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
     install_requires=[
         'argcomplete',
+        'cryptography',
         'html2markdown',
         'keyring',
         'pick',

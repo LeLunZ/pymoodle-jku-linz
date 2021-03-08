@@ -72,6 +72,24 @@ def requests_retry_session_async(
 
 
 class MoodleClient:
+    def login_with_old_session(self, cookies, sesskey, userid) -> bool:
+        """Tries old cookies and sesskey.
+        """
+        self.session.cookies.clear()
+        self.sesskey = sesskey
+        self.userid = userid
+        self.session.cookies.update(cookies)
+        self.session.cookies.update({'MoodleSessionjkuSessionCookie': 'htgb5l622nsa8qeg91efs661i1sju',
+                                     '_shibsession_bd99d1079fe4a6d86fa5dbc67b1311ea7f3a8afff80fcfbd1e7025e948340ea97d': '_node01070jugjrd1ycu0d827efx6eh142846a8.node0'})
+        try:
+            response = self.session.get('https://moodle.jku.at/jku/my/')
+        except Exception:
+            self.sesskey = None
+            self.userid = None
+            self.session.cookies.clear()
+            return False
+        return True
+
     def login(self, username, password) -> bool:
         """Retrieves tokens and cookies for moodle.
 
@@ -246,7 +264,8 @@ class MoodleClient:
 
         :raises Exception: If user isn't logged in.
         """
-        if ('enroll' in r.url and 'enroll' not in r.request.url) or ('login' in r.url and 'login' not in r.request.url):
+        if ('enroll' in r.url and 'enroll' not in r.request.url) or (
+                'login' in r.url and 'login' not in r.request.url) or '<title>jku: Dashboard (GUEST)</title>' in r.text:
             raise Exception('Please login.')
         return r
 

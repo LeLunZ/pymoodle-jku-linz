@@ -98,7 +98,6 @@ def main():
 
         client: MoodleClient = login(credentials=args.credentials,
                                      threads=args.threads)
-
         if client is None:
             raise Exception('Try again. Login Failed.')
         if args.utility == 'grades':
