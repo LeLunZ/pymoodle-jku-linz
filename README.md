@@ -8,15 +8,12 @@ It's also a python library, which you can use in your project.
 ##### Table of Contents  
 
 [Description](#Description) </br>
-[Install](#Install)
-[Terminal Application](#Commandline-Scripts)
-[Python Package](#Python-Package)
-[Dependencies and Unittests](#Good-To-Know)
-
-[Unsupported](#Unsupported)
-
-[Contribution](#Contribution)
-
+[Install](#Install) </br>
+[Terminal Application](#Commandline-Scripts) </br>
+[Python Package](#Python-Package) </br>
+[Dependencies and Unittests](#Good-To-Know) </br>
+[Unsupported](#Unsupported) </br>
+[Contribution](#Contribution) </br>
 [Planned](#Planned)
 
 
