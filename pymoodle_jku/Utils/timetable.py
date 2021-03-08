@@ -23,7 +23,8 @@ def main(client: MoodleClient, args):
         for t in t_list:
             date = datetime.fromtimestamp(t.timestart).strftime("%Y-%m-%d %H:%M:%S")
             output.append([t.name, t.eventtype, date, t.url])
-            print_array_results_table(output, ['Name', 'Type', 'Date', 'Link'])
+        print_array_results_table(output, ['Name', 'Type', 'Date', 'Link'])
+        print()
 
     if __name__ == "__main__":
         pass
