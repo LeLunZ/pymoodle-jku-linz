@@ -135,3 +135,13 @@ If you want to add something, create an issue and do a pull request.
 
 * clones this repo
 * `pip3 install -r requirements.txt`
+
+## Planned
+
+- [ ] file uploader for assignments
+
+Something that also seems interesting would be a kusss integration:
+- [ ] a kusss integration for checking grades
+- [ ] a kusss integration for registering in courses (so you don't have struggles when the kusss webserver is dying)
+
+I don't really know if I want to integrate or should integrate that, if a few people are interested in that I am more willing to spend time on it.
