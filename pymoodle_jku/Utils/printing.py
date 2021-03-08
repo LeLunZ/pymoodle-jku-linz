@@ -12,7 +12,7 @@ def clean_screen():
     :return:
     """
     if platform.system() == 'Windows':
-        subprocess.call('cls')
+        subprocess.call('cls', shell=True)
     else:
         subprocess.call('clear')
 
