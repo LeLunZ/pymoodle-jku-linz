@@ -5,7 +5,7 @@ page https://moodle.jku.at/jku/login/index.php! Optionally you can store them in
 
 It's also a python library, which you can use in your project.
 
-##### Table of Contents  
+##### Table of Contents
 
 [Description](#Description) </br>
 [Install](#Install) </br>
@@ -15,7 +15,6 @@ It's also a python library, which you can use in your project.
 [Unsupported](#Unsupported) </br>
 [Contribution](#Contribution) </br>
 [Planned](#Planned)
-
 
 ## Description
 
@@ -32,7 +31,8 @@ You can do all this from the commandline and much more:
 
 `pip3 install -U pymoodle-jku `
 
-To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. Can also be done after installing pymoodle.
+To Download streams, you need [ffmpeg](https://ffmpeg.org/download.html) installed. Can also be done after installing
+pymoodle.
 
 To get autocompletion working add this to your bash .bashrc/.zshrc/....:
 
@@ -40,7 +40,6 @@ To get autocompletion working add this to your bash .bashrc/.zshrc/....:
 
 If you are using fish/Tcsh or another shell, have a closer
 look [here](https://github.com/kislyuk/argcomplete#zsh-support).
-
 
 ## Commandline Scripts
 
@@ -53,7 +52,9 @@ With **pymoodle** you can call these Utilities:
 - timeline
 - config
 
-You will find everything you need if you call:
+**Just call `pymoodle` from the terminal to get the Help page.**
+
+You will also find everything you need if you call:
 `pymoodle --help` or `pymoodle {Utility} --help`
 
 Credentials won't be stored anywhere. If the username/password is entered while running Utilities (not with `-c`), you
@@ -71,14 +72,15 @@ needs to exist before downloading.)
 ### Download
 
 With the download utility you can download files and exams from moodle. There are multiple ways to select a course. If
-nothing is specified it will download everything. But you can also launch Download in interactive mode like
-this: `pymoodle download -i`
+you run the `pymoodle download` without any arguments, you can pick the downloadable courses. But you can also Download
+everything from the current semester like this: `pymoodle download -a`
+To download really everything call `pymoodle download -a -o`. This will also download older semester.
 
-Or it's possible to search and download courses, which includes the word "Logic" or "Daten" like
+Or it's possible to search and download courses, which name includes the word "Logic" or "Daten" like
 this: `pymoodle download -s Logic -s Daten`
 
-To download stuff from old courses specify the `-o` option, else only running courses will be considered. In interactive
-mode you can press *m* to load old courses.
+To download stuff from old courses specify the `-o` option, else only running/current courses will be considered. In
+interactive mode you can press *m* to load old courses.
 
 **Only for people who used PyMoodle before**
 
@@ -86,6 +88,7 @@ mode you can press *m* to load old courses.
 later. Its currently only implemented so that you don't have to download everything else again.
 
 ### Grades
+
 ![grades](https://user-images.githubusercontent.com/31982496/110263795-059fc980-7fb8-11eb-8724-4ded9c08ca09.mp4)
 
 Grades will launch automatically in interactive mode. It can give you a short overview about your grades, or you can
@@ -97,7 +100,7 @@ or `-s` to search for courses.
 ![timeline](./assets/timeline.png)
 
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
-limit of events to show (`--limits 26`).
+limit of events to show (`--limits 10`).
 
 ## Python Package
 
@@ -152,7 +155,9 @@ If you want to add something, create an issue and do a pull request.
 - [ ] file uploader for assignments
 
 Something that also seems interesting would be a kusss integration:
+
 - [ ] a kusss integration for checking grades
 - [ ] a kusss integration for registering in courses (so you don't have struggles when the kusss webserver is dying)
 
-I don't really know if I want to integrate or should integrate that, if a few people are interested in that I am more willing to spend time on it.
+I don't really know if I want to integrate or should integrate that, if a few people are interested in that I am more
+willing to spend time on it.
