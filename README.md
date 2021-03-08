@@ -15,7 +15,7 @@ It's also a python library, which you can use in your project.
 
 [Python Package](#Python-Package)
 
-[Dependencies and Unittests](##Good-To-Know)
+[Dependencies and Unittests](#Good-To-Know)
 
 [Unsupported](#Unsupported)
 
