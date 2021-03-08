@@ -38,8 +38,6 @@ class DownloadManager:
         :param client: A instance of a MoodleClient, that should be logged in.
         :param path: The directory where downloads are stored.
         """
-
-        # TODO check enddate for download
         self.urls = urls
         self.failed = []
         self.done: List[Tuple[str, Path]] = []
