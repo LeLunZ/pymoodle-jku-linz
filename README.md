@@ -13,9 +13,9 @@ It's also a python library, which you can use in your project.
 
 [Terminal Application](#Commandline-Scripts)
 
-[Python Package](#PythonPackage)
+[Python Package](#Python-Package)
 
-[Dependencies and Unittests](##GoodToKnow)
+[Dependencies and Unittests](##Good-To-Know)
 
 [Unsupported](#Unsupported)
 
