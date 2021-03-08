@@ -75,7 +75,7 @@ mode you can press *m* to load old courses.
 later. Its currently only implemented so that you don't have to download everything else again.
 
 ### Grades
-[Grades](./assets/grades.mp4)
+![Grades](./assets/grades.mp4)
 
 Grades will launch automatically in interactive mode. It can give you a short overview about your grades, or you can
 look at the specific evaluations from a course. Just like {download} it's also possible to use `-o` for old courses
