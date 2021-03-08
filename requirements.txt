@@ -1,9 +1,9 @@
 html2markdown==0.1.7
-keyring==22.0.1
+keyring==23.0.0
 io-uuid==0.0.5
 lxml==4.6.2
 pick==1.0.0
-pytube==10.4.1
+pytube==10.5.3
 argcomplete==1.12.2
 urllib3==1.26.3
 requests==2.25.1
