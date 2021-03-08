@@ -72,13 +72,13 @@ def convert_elements(elements) -> str:
     cleaner.remove_tags = ['span']
     for e in elements:
         if isinstance(e, _ElementUnicodeResult):
-            output += str(e)
+            output += '\n'.join([line.strip() for line in str(e).splitlines()]) + '\n'
         else:
             e.attrib.clear()
-            output += html2markdown.convert(cleaner.clean_html(d_utf8(etree.tostring(e))))
+            conv = html2markdown.convert(cleaner.clean_html(d_utf8(etree.tostring(e))))
+            output += '\n'.join([line.strip() for line in conv.splitlines()])
         output += '\n'
-    if not output.endswith('\n'):
-        output += '\n'
+    output += '\n'
     return output
 
 
