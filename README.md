@@ -75,12 +75,15 @@ mode you can press *m* to load old courses.
 later. Its currently only implemented so that you don't have to download everything else again.
 
 ### Grades
+![grades](https://user-images.githubusercontent.com/31982496/110263795-059fc980-7fb8-11eb-8724-4ded9c08ca09.mp4)
 
 Grades will launch automatically in interactive mode. It can give you a short overview about your grades, or you can
 look at the specific evaluations from a course. Just like {download} it's also possible to use `-o` for old courses
 or `-s` to search for courses.
 
 ### Timeline
+
+![timeline](./assets/timeline.png)
 
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
 limit of events to show (`--limits 26`).
