@@ -65,8 +65,8 @@ def load_client(client):
     """
     Decodes the encrypted cookies and data from the filesystem.
     """
-    if f is not None:
-        token = config['Session']
+    token = config['Session']
+    if f is not None and token is not None:
         cookies, sesskey, userid = pickle.loads(f.decrypt(token.encode()))
         client.login_with_old_session(cookies, sesskey, userid)
         return True
@@ -112,7 +112,7 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
         if not client_prepared:
             try:
                 auth = load_client(client)
-            except (KeyError, pickle.UnpicklingError, InvalidToken):
+            except (KeyError, pickle.UnpicklingError, InvalidToken, AttributeError):
                 auth = False
             if auth:
                 return client
