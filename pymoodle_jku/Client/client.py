@@ -266,8 +266,8 @@ class MoodleClient:
 
         :raises Exception: If user isn't logged in.
         """
-        if r.headers.get('Content-Type') == 'application/json; charset=utf-8' or r.headers.get(
-                'Content-Type') == 'application/json':
+        if (r.headers.get('Content-Type') == 'application/json; charset=utf-8' or r.headers.get(
+                'Content-Type') == 'application/json') and 'moodle.jku.at' in r.url:
             j = r.json()
             if type(j) is list and type(j[0]) is dict and 'error' in j[0] and j[0]['error'] is True:
                 raise NotLoggedInError('Please Login')
