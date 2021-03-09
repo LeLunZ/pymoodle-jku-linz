@@ -7,10 +7,10 @@ from keyring.errors import PasswordDeleteError
 cp = configparser.ConfigParser(allow_no_value=True)
 config_file = Path.home() / '.pymoodle'
 
+cp['DEFAULT'] = {'Threads': '6', 'Path': None, 'Username': None, 'SaveQuestion': 'True', 'Session': None,
+                 'UpdateInfo': 'True'}
 if config_file.is_file():
     cp.read(config_file)
-else:
-    cp['DEFAULT'] = {'Threads': '6', 'Path': None, 'Username': None, 'SaveQuestion': 'True', 'Session': None}
 
 config = cp['DEFAULT']
 

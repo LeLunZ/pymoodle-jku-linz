@@ -4,10 +4,11 @@ from distutils.util import strtobool
 from typing import Optional, Any, List
 
 from pick import Picker
+from sty import fg
 
 
 def print_exc(exception):
-    print('Please Notify LeLunZ on the JKU Discord Channel:')
+    print(fg.li_red + '\n\nPlease Notify LeLunZ on the JKU Discord Channel:' + fg.rs)
     print(str(exception))
 
 

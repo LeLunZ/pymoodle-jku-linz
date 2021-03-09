@@ -1,8 +1,37 @@
 import argparse
+from json.decoder import JSONDecodeError
 
 import argcomplete
 
-from pymoodle_jku.Utils import basic
+from pymoodle_jku.Utils.config_data import config
+
+
+def check_update():
+    updates = config.getboolean('UpdateInfo')
+    if updates:
+        from importlib.metadata import version
+        import requests
+        from requests import RequestException
+        from packaging.version import parse as parse_version
+        from sty import fg
+        package = 'pymoodle-jku'
+        repo_url = f'LeLunZ/{package}-linz'
+        installed_version = version(package)
+        try:
+            response = requests.get(f'https://api.github.com/repos/{repo_url}/releases/latest')
+            current_version = response.json()['tag_name']
+            c_version = parse_version(current_version)
+            i_version = parse_version(installed_version)
+            if i_version < c_version:
+                print(fg.li_red + 'New Version is available!' + fg.rs)
+                print(
+                    fg.li_red + 'Install with python3 >= 3.8 pip: ' + fg.rs + fg.li_blue + 'pip install -U pymoodle-jku' + fg.rs)
+                print(
+                    fg.li_red + 'Or use pip3 if you have python2 on the system: ' + fg.rs + fg.li_green + 'pip3 install -U pymoodle-jku' + fg.rs)
+        except RequestException:
+            pass
+        except JSONDecodeError:
+            pass
 
 
 def main():
@@ -74,13 +103,17 @@ def main():
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-    # imports are here because autocomplete is faster that way
 
+    # imports are here because autocomplete is faster that way
+    import atexit
+
+    from pymoodle_jku.Utils import basic
     from pymoodle_jku.Client.client import MoodleClient
     from pymoodle_jku.Utils import grades, downloading, timetable, config
     from pymoodle_jku.Utils import login
 
-    # first use tools
+    atexit.register(check_update)
+
     if 'utility' not in args or args.utility is None:
         all_parser = [config_parser, grades_parser, download_parser, timeline_parser, parser]
         return basic.main(all_parser)

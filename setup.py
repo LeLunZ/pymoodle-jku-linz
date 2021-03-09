@@ -32,6 +32,7 @@ setup(
         'lxml',
         'urllib3',
         'sty',
+        'packaging',
         'requests',
         'requests-futures',
         'io-uuid'

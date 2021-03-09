@@ -71,9 +71,9 @@ needs to exist before downloading.)
 
 ### Download
 
-With the download utility you can download files and exams from moodle. 
-There are multiple ways to select a course. If you run the `pymoodle download` without any arguments, you can pick the downloadable courses. 
-But you can also Download everything from the current semester like this: `pymoodle download -a`
+With the download utility you can download files and exams from moodle. There are multiple ways to select a course. If
+you run the `pymoodle download` without any arguments, you can pick the downloadable courses. But you can also Download
+everything from the current semester like this: `pymoodle download -a`
 To download really everything call `pymoodle download -a -o`. This will also download all older semesters.
 
 Or it's possible to search and download courses, which name includes the word "Logic" or "Daten" like
@@ -84,8 +84,8 @@ interactive mode you can press *M* or *m* to load old/more courses.
 
 **Only for people who used PyMoodle before**
 
-It seems like, Pymoodle had some problems. Thus a lot of not downloaded urls got written to 'urls.txt'. 
-Just delete the file if you want to try a redownload. Or if you only want to redownload the exams/quizes call:
+It seems like, Pymoodle had some problems. Thus a lot of not downloaded urls got written to 'urls.txt'. Just delete the
+file if you want to try a redownload. Or if you only want to redownload the exams/quizes call:
 `pymoodle download -e -o`
 
 ### Grades
@@ -154,6 +154,7 @@ If you want to add something, create an issue and do a pull request.
 
 ## Planned
 
+- [ ] Log file support
 - [ ] file uploader for assignments
 
 Something that also seems interesting would be a kusss integration:

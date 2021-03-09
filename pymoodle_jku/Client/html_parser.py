@@ -10,6 +10,7 @@ from lxml.html.clean import Cleaner
 
 from pymoodle_jku.Classes.course_data import Url, UrlType, CourseData
 from pymoodle_jku.Classes.evaluation import Evaluation
+from pymoodle_jku.Utils.printing import print_exc
 
 
 def d_utf8(obj) -> str:
@@ -162,10 +163,14 @@ class CoursePage(MainRegion):
         :return: A List of URLs.
         """
         all_url_imgs = self.region.xpath('.//a/img')
-        return [Url(str(i.getparent().xpath('./@href')[0]),
-                    UrlType[url_p[3].capitalize()])
-                for i in all_url_imgs if
-                (url_p := Path(unquote(urlparse((url := i.getparent().xpath('./@href')[0])).path)).parts)[2] == 'mod']
+        urls = []
+        for i in all_url_imgs:
+            if (url_p := Path(unquote(urlparse((url := i.getparent().xpath('./@href')[0])).path)).parts)[2] == 'mod':
+                try:
+                    urls.append(Url(str(url), UrlType[url_p[3].capitalize()]))
+                except KeyError as err:
+                    print_exc(err)
+        return urls
 
     def to_course_data(self) -> CourseData:
         """

@@ -19,7 +19,7 @@ class UrlType(Enum):
     Forum = 10
     Checkmark = 11
     Wiki = 11
-
+    
 
 @dataclass
 class Url:
