@@ -71,21 +71,22 @@ needs to exist before downloading.)
 
 ### Download
 
-With the download utility you can download files and exams from moodle. There are multiple ways to select a course. If
-you run the `pymoodle download` without any arguments, you can pick the downloadable courses. But you can also Download
-everything from the current semester like this: `pymoodle download -a`
-To download really everything call `pymoodle download -a -o`. This will also download older semester.
+With the download utility you can download files and exams from moodle. 
+There are multiple ways to select a course. If you run the `pymoodle download` without any arguments, you can pick the downloadable courses. 
+But you can also Download everything from the current semester like this: `pymoodle download -a`
+To download really everything call `pymoodle download -a -o`. This will also download all older semesters.
 
 Or it's possible to search and download courses, which name includes the word "Logic" or "Daten" like
 this: `pymoodle download -s Logic -s Daten`
 
 To download stuff from old courses specify the `-o` option, else only running/current courses will be considered. In
-interactive mode you can press *m* to load old courses.
+interactive mode you can press *M* or *m* to load old/more courses.
 
 **Only for people who used PyMoodle before**
 
-**Exams** are now downloaded too. To force a redownload of only exams use the `-e` option. This future will be removed
-later. Its currently only implemented so that you don't have to download everything else again.
+It seems like, Pymoodle had some problems. Thus a lot of not downloaded urls got written to 'urls.txt'. 
+Just delete the file if you want to try a redownload. Or if you only want to redownload the exams/quizes call:
+`pymoodle download -e -o`
 
 ### Grades
 
@@ -100,7 +101,7 @@ or `-s` to search for courses.
 ![timeline](./assets/timeline.png)
 
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
-limit of events to show (`--limits 10`).
+limit of events to show (`--limits 15`).
 
 ## Python Package
 
