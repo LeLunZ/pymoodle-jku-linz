@@ -134,7 +134,7 @@ def main():
     if sys.version_info < supported_version:
         print(fg.li_red + 'You aren\'t running a supported Python version. There could be some bugs while running.')
         print(f'For full support install {supported_version_str}' + fg.rs)
-        continue_pymoodle = yn_question(input(fg.li_blue + 'Do you still want to continue? (y/n): ' + fg.rs))
+        continue_pymoodle = yn_question(input(fg.li_blue + 'Do you still want to continue?' + fg.rs))
         if not continue_pymoodle:
             return 0
 

@@ -78,18 +78,18 @@ def main(args):
                 except ValueError:
                     pass
             elif idx == 3:
-                question = 'Disable (y/n): ' if config.getboolean('SaveQuestion') else 'Enable (y/n): '
+                question = 'Disable?' if config.getboolean('SaveQuestion') else 'Enable?'
                 save_password = yn_question(question)
                 if save_password:
                     config['SaveQuestion'] = str(not config.getboolean('SaveQuestion'))
             elif idx == 4:
-                question = 'Disable (y/n): ' if config.getboolean('UpdateInfo') else 'Enable (y/n): '
+                question = 'Disable?' if config.getboolean('UpdateInfo') else 'Enable?'
                 save_password = yn_question(question)
                 if save_password:
                     config['UpdateInfo'] = str(not config.getboolean('UpdateInfo'))
             elif idx == 5:
                 delete_config = yn_question(
-                    'Password and config will be deleted. Downloaded files wont!\nAre you sure? (y/n): ')
+                    'Password and config will be deleted. Downloaded files wont!\nAre you sure?')
                 if delete_config:
                     try:
                         keyring.delete_password('pymoodle-jku', config['Username'])

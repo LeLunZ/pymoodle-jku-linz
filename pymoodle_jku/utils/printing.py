@@ -3,6 +3,7 @@ import subprocess
 from distutils.util import strtobool
 from typing import Optional, Any, List
 
+import readchar
 from pick import Picker
 from sty import fg
 
@@ -25,11 +26,12 @@ def clean_screen():
 
 def yn_question(question=''):
     """
-    Converts a input to a boolean.
+    Converts a char to a boolean.
     :param question: A question to be asked while inputing.
     :return: returns the boolean representation of the string.
     """
-    return strtobool(input(question).strip().lower())
+    print(question + ' (y/n): ', end='')
+    return strtobool(readchar.readchar().lower())
 
 
 def print_courses(client):
