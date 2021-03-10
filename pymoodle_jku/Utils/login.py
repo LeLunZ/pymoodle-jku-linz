@@ -135,8 +135,8 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
         except KeyboardInterrupt:
             return None
         except NotLoggedInError:
-            count += 1
             print('Login failed, trying again...')
+        count += 1
     if config.getboolean('SaveQuestion') and new_credentials:
         print('Login Worked ;) Moodle Console mode confirmed!')
         save_password = yn_question(

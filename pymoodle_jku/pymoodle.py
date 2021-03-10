@@ -1,12 +1,10 @@
 import argparse
-from json.decoder import JSONDecodeError
 
 import argcomplete
 
-from pymoodle_jku.Utils.config_data import config
-
 
 def check_update():
+    from pymoodle_jku.Utils.config_data import config
     updates = config.getboolean('UpdateInfo')
     if updates:
         from importlib.metadata import version
@@ -14,6 +12,8 @@ def check_update():
         from requests import RequestException
         from packaging.version import parse as parse_version
         from sty import fg
+        from json.decoder import JSONDecodeError
+
         package = 'pymoodle-jku'
         repo_url = f'LeLunZ/{package}-linz'
         installed_version = version(package)
@@ -111,6 +111,7 @@ def main():
     from pymoodle_jku.Client.client import MoodleClient
     from pymoodle_jku.Utils import grades, downloading, timetable, config
     from pymoodle_jku.Utils import login
+    from pymoodle_jku.Classes.exceptions import LoginError
 
     atexit.register(check_update)
 
@@ -126,7 +127,7 @@ def main():
                                            threads=args.threads)
 
         if client is None:
-            raise Exception('Try again. Login Failed.')
+            raise LoginError('Try again. Login Failed.')
         if args.utility == 'grades':
             return grades.main(client, args)
         elif args.utility == 'download':
