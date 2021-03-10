@@ -13,11 +13,12 @@ def check_update():
         from packaging.version import parse as parse_version
         from sty import fg
         from json.decoder import JSONDecodeError
+        from importlib.metadata import PackageNotFoundError
 
         package = 'pymoodle-jku'
         repo_url = f'LeLunZ/{package}-linz'
-        installed_version = version(package)
         try:
+            installed_version = version(package)
             response = requests.get(f'https://api.github.com/repos/{repo_url}/releases/latest')
             current_version = response.json()['tag_name']
             c_version = parse_version(current_version)
@@ -31,6 +32,8 @@ def check_update():
         except RequestException:
             pass
         except JSONDecodeError:
+            pass
+        except PackageNotFoundError:
             pass
 
 
