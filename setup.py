@@ -26,7 +26,7 @@ setup(
     license='BSD 3-Clause',
     description='A client for the moodle page of JKU Linz.',
     author='LeLunZ',
-    author_email='l.accounts@pm.me',
+    author_email='l.accounts+pypi@pm.me',
     url='https://github.com/LeLunZ/pymoodle-jku-linz',
     download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/1.1.4.tar.gz',
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
