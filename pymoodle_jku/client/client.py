@@ -188,13 +188,17 @@ class MoodleClient:
         else:
             headers = {'Content-type': 'application/json'}
             response = self.session.post(
-                f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification',
+                f'https://moodle.jku.at/jku/lib/ajax/service.php?sesskey={self.sesskey}',
                 data=json.dumps(
                     [{"index": 0, "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
                       "args": {"offset": 0, "limit": 0, "classification": "all", "sort": "fullname",
+                               "customfieldname": "", "customfieldvalue": ""}},
+                     {"index": 1, "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
+                      "args": {"offset": 0, "limit": 0, "classification": "hidden", "sort": "fullname",
                                "customfieldname": "", "customfieldvalue": ""}}]), headers=headers)
 
-            courses_json = json.loads(response.content.decode('utf-8'))[0]['data']['courses']
+            courses_json = json.loads(response.content.decode('utf-8'))[0]['data']['courses'] + \
+                           json.loads(response.content.decode('utf-8'))[1]['data']['courses']
 
             if load_pages is False:
                 for c in courses_json:
