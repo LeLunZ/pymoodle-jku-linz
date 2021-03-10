@@ -98,15 +98,16 @@ or `-s` to search for courses.
 
 ### Timeline
 
-![timeline](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/master/assets/timeline.png)
+![timeline](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/main/assets/timeline.png)
 
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
 limit of events to show (`--limits 15`).
 
 ## Python Package
 
-There are multiple examples how to use the PyMoodle package. Just look in the [examples](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/master/examples) folder and start
-with [moodle_client.py](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/master/examples/moodle_client.py).
+There are multiple examples how to use the PyMoodle package. Just look in
+the [examples](https://github.com/LeLunZ/pymoodle-jku-linz/tree/main/examples) folder and start
+with [moodle_client.py](https://github.com/LeLunZ/pymoodle-jku-linz/tree/main/examples/moodle_client.py).
 
 There are examples for:
 
@@ -120,7 +121,8 @@ There are examples for:
 
 ### Unittests
 
-I have set up multiple [unittests](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/master/tests), to ensure that the next releases won't introduce bugs.
+I have set up multiple [unittests](https://raw.githubusercontent.com/LeLunZ/pymoodle-jku-linz/main/tests), to ensure
+that the next releases won't introduce bugs.
 
 ### Dependencies
 
