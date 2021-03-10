@@ -82,7 +82,7 @@ def main(client: MoodleClient, args):
                 if index == -2:
                     if not args.old and not loaded_more:
                         loaded_more = True
-                        courses = client.courses(load_pages=False)
+                        courses = list(client.courses(load_pages=False))
             else:
                 break
         picked_courses = [courses[idx] for v, idx in selected]
