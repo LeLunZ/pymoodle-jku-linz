@@ -1,10 +1,10 @@
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Client.download_manager import DownloadManager
-from pymoodle_jku.Utils.login import login
-from pymoodle_jku.Classes.course_data import UrlType, Url, CourseData, Section
-from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.evaluation import Evaluation
-from pymoodle_jku.Classes.events import Event
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.client.download_manager import DownloadManager
+from pymoodle_jku.utils.login import login
+from pymoodle_jku.classes.course_data import UrlType, Url, CourseData, Section
+from pymoodle_jku.classes.course import Course
+from pymoodle_jku.classes.evaluation import Evaluation
+from pymoodle_jku.classes.events import Event
 
 # def main():
 #     # try out some stuff

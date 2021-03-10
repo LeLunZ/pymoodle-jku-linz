@@ -14,10 +14,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from pymoodle_jku.Classes.exceptions import NotLoggedInError
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.config_data import config, write_config
-from pymoodle_jku.Utils.printing import yn_question
+from pymoodle_jku.classes.exceptions import NotLoggedInError
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.utils.config_data import config, write_config
+from pymoodle_jku.utils.printing import yn_question
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
     :param credentials: Tuple[str, str] with (username, password).
     :param threads: the amount of threads to use for crawling.
     :param client: a prepared MoodleClient.
-    :return: A Moodle Client if login worked, else None
+    :return: A Moodle client if login worked, else None
     """
     client_prepared = client is not None
     client = client or MoodleClient(pool_executor=ThreadPoolExecutor(max_workers=threads or config.getint('Threads')))

@@ -3,13 +3,13 @@ import time
 from pathlib import Path
 from typing import Union, List, Tuple
 
-from pymoodle_jku.Classes.course_data import Url
-from pymoodle_jku.Classes.evaluation import Evaluation
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Client.download_manager import DownloadManager
-from pymoodle_jku.Utils.config import config
-from pymoodle_jku.Utils.login import relogin
-from pymoodle_jku.Utils.printing import print_pick_results_table
+from pymoodle_jku.classes.course_data import Url
+from pymoodle_jku.classes.evaluation import Evaluation
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.client.download_manager import DownloadManager
+from pymoodle_jku.utils.config import config
+from pymoodle_jku.utils.login import relogin
+from pymoodle_jku.utils.printing import print_pick_results_table
 
 logger = logging.getLogger(__name__)
 

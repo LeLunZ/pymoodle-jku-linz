@@ -4,17 +4,17 @@ from pathlib import Path
 
 import keyring
 
-from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.course_data import CourseData
-from pymoodle_jku.Classes.exceptions import NotLoggedInError
-from pymoodle_jku.Client.client import MoodleClient
+from pymoodle_jku.classes.course import Course
+from pymoodle_jku.classes.course_data import CourseData
+from pymoodle_jku.classes.exceptions import NotLoggedInError
+from pymoodle_jku.client.client import MoodleClient
 
 # If you want to suppress the ResourceWarnings uncomment this:
 # import warnings
 # warnings.filterwarnings("ignore", category=ResourceWarning)
 # These warnings are an indication that everything is working correctly and nothing is going wrong.
-from pymoodle_jku.Client.download_manager import DownloadManager
-from pymoodle_jku.Utils.config import config, set_new_user
+from pymoodle_jku.client.download_manager import DownloadManager
+from pymoodle_jku.utils.config import config, set_new_user
 
 
 class TestPyMoodleClientLogin(unittest.TestCase):

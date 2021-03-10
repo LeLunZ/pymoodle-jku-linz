@@ -4,7 +4,7 @@ import argcomplete
 
 
 def check_update():
-    from pymoodle_jku.Utils.config_data import config
+    from pymoodle_jku.utils.config_data import config
     updates = config.getboolean('UpdateInfo')
     if updates:
         from importlib.metadata import version
@@ -110,12 +110,12 @@ def main():
 
     from sty import fg
 
-    from pymoodle_jku.Utils import basic
-    from pymoodle_jku.Client.client import MoodleClient
-    from pymoodle_jku.Utils import grades, downloading, timetable, config
-    from pymoodle_jku.Utils import login
-    from pymoodle_jku.Classes.exceptions import LoginError
-    from pymoodle_jku.Utils.printing import yn_question
+    from pymoodle_jku.utils import basic
+    from pymoodle_jku.client.client import MoodleClient
+    from pymoodle_jku.utils import grades, downloading, timetable, config
+    from pymoodle_jku.utils import login
+    from pymoodle_jku.classes.exceptions import LoginError
+    from pymoodle_jku.utils.printing import yn_question
 
     atexit.register(check_update)
 

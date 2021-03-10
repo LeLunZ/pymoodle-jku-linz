@@ -3,10 +3,10 @@ from pathlib import Path
 
 import keyring
 
-from pymoodle_jku.Classes.course_data import Url, UrlType
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Client.download_manager import DownloadManager
-from pymoodle_jku.Utils.config import config
+from pymoodle_jku.classes.course_data import Url, UrlType
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.client.download_manager import DownloadManager
+from pymoodle_jku.utils.config import config
 
 
 class TestDownloadManager(unittest.TestCase):

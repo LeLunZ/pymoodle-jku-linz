@@ -1,10 +1,10 @@
 import time
 from argparse import Namespace
 
-from pymoodle_jku.Classes.course import Course, parse_course_name
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.login import relogin
-from pymoodle_jku.Utils.printing import print_pick_results_table, clean_screen, print_array_results_table
+from pymoodle_jku.classes.course import Course, parse_course_name
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.utils.login import relogin
+from pymoodle_jku.utils.printing import print_pick_results_table, clean_screen, print_array_results_table
 
 
 @relogin

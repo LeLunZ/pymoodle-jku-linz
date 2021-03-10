@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pymoodle_jku.Classes.course_data import UrlType
+from pymoodle_jku.classes.course_data import UrlType
 
 
 @dataclass

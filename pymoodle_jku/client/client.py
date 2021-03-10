@@ -9,13 +9,13 @@ from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from urllib3 import Retry
 
-from pymoodle_jku.Classes.course import Course
-from pymoodle_jku.Classes.evaluation import Evaluation
-from pymoodle_jku.Classes.events import Event
-from pymoodle_jku.Classes.exceptions import NotLoggedInError, LoginError
-from pymoodle_jku.Client.html_parser import LoginPage, MyPage, \
+from pymoodle_jku.classes.course import Course
+from pymoodle_jku.classes.evaluation import Evaluation
+from pymoodle_jku.classes.events import Event
+from pymoodle_jku.classes.exceptions import NotLoggedInError, LoginError
+from pymoodle_jku.client.html_parser import LoginPage, MyPage, \
     ValuationOverviewPage, CoursePage, ValuationPage
-from pymoodle_jku.Utils.printing import print_exc
+from pymoodle_jku.utils.printing import print_exc
 
 
 def requests_retry_session(
@@ -288,7 +288,7 @@ class MoodleClient:
         return r
 
     def __init__(self, pool_executor=ThreadPoolExecutor(max_workers=4)):
-        """Initializes a MoodleClient, a Client can load Data from Moodle.
+        """Initializes a MoodleClient, a client can load Data from Moodle.
 
         :param pool_executor: A instance of a ThreadPoolExecutor.
         """

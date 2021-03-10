@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Union
 
-from pymoodle_jku.Client.html_parser import CoursePage
+from pymoodle_jku.client.html_parser import CoursePage
 
 
 def parse_course_name(fullname):

@@ -5,10 +5,10 @@ import keyring
 from keyring.errors import PasswordDeleteError
 from pick import pick
 
-from pymoodle_jku.Classes.exceptions import LoginError
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.config_data import config, set_new_user, write_config, config_file
-from pymoodle_jku.Utils.printing import clean_screen, yn_question
+from pymoodle_jku.classes.exceptions import LoginError
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.utils.config_data import config, set_new_user, write_config, config_file
+from pymoodle_jku.utils.printing import clean_screen, yn_question
 
 
 def build_questions():

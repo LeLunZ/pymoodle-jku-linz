@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from examples.moodle_client import simple_client
-from pymoodle_jku.Client.download_manager import DownloadManager
+from pymoodle_jku.client.download_manager import DownloadManager
 
 
 def download():

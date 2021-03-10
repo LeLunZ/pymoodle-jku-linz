@@ -3,7 +3,7 @@ import webbrowser
 
 from sty import fg
 
-from pymoodle_jku.Utils.printing import print_pick_results_table, clean_screen
+from pymoodle_jku.utils.printing import print_pick_results_table, clean_screen
 
 
 def main(all_parser):

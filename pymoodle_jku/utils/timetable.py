@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime
 
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Utils.login import relogin
-from pymoodle_jku.Utils.printing import print_array_results_table
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.utils.login import relogin
+from pymoodle_jku.utils.printing import print_array_results_table
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,9 @@ from lxml import html, etree
 from lxml.etree import _ElementUnicodeResult
 from lxml.html.clean import Cleaner
 
-from pymoodle_jku.Classes.course_data import Url, UrlType, CourseData
-from pymoodle_jku.Classes.evaluation import Evaluation
-from pymoodle_jku.Utils.printing import print_exc
+from pymoodle_jku.classes.course_data import Url, UrlType, CourseData
+from pymoodle_jku.classes.evaluation import Evaluation
+from pymoodle_jku.utils.printing import print_exc
 
 
 def d_utf8(obj) -> str:

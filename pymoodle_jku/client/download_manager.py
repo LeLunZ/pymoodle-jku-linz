@@ -11,11 +11,11 @@ import iouuid
 from lxml import html
 from pytube import YouTube
 
-from pymoodle_jku.Classes.course_data import UrlType, Url
-from pymoodle_jku.Classes.evaluation import Evaluation
-from pymoodle_jku.Client.client import MoodleClient
-from pymoodle_jku.Client.html_parser import QuizSummary, QuizPage
-from pymoodle_jku.Utils.printing import print_exc
+from pymoodle_jku.classes.course_data import UrlType, Url
+from pymoodle_jku.classes.evaluation import Evaluation
+from pymoodle_jku.client.client import MoodleClient
+from pymoodle_jku.client.html_parser import QuizSummary, QuizPage
+from pymoodle_jku.utils.printing import print_exc
 
 
 def rsuffix(suffix) -> str:
@@ -33,7 +33,7 @@ def rsuffix(suffix) -> str:
 
 class DownloadManager:
     def __init__(self, urls, client: 'MoodleClient', path):
-        """Takes Objects which should be downloaded with a Moodle Client.
+        """Takes Objects which should be downloaded with a Moodle client.
 
         :param urls: A List of Objects to download. The DownloadManager will check if these are downloadable.
         :param client: A instance of a MoodleClient, that should be logged in.
