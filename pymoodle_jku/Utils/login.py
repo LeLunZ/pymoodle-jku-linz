@@ -10,6 +10,7 @@ from typing import Optional
 import keyring
 from argparse import Namespace
 from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
@@ -77,7 +78,8 @@ def setup_encryption(password):
     global f
     if f is None:
         salt = b'pymoodle-jku'
-        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
+        backend = default_backend()
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=backend)
         key = base64.urlsafe_b64encode(kdf.derive(bytes(password.encode())))
         f = Fernet(key)
 
@@ -116,7 +118,6 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
                 auth = False
             if auth:
                 return client
-
     elif credentials is None:
         # no user configured
         new_credentials = True

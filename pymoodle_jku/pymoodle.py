@@ -25,9 +25,9 @@ def check_update():
             if i_version < c_version:
                 print(fg.li_red + 'New Version is available!' + fg.rs)
                 print(
-                    fg.li_red + 'Install with python3 >= 3.8 pip: ' + fg.rs + fg.li_blue + 'pip install -U pymoodle-jku' + fg.rs)
+                    fg.li_red + 'Install with python3 >= 3.8 pip: ' + fg.rs + fg.li_blue + f'pip install -U pymoodle-jku=={current_version}' + fg.rs)
                 print(
-                    fg.li_red + 'Or use pip3 if you have python2 on the system: ' + fg.rs + fg.li_green + 'pip3 install -U pymoodle-jku' + fg.rs)
+                    fg.li_red + 'Or use pip3 if you have python2 on the system: ' + fg.rs + fg.li_green + f'pip3 install -U pymoodle-jku=={current_version}' + fg.rs)
         except RequestException:
             pass
         except JSONDecodeError:
