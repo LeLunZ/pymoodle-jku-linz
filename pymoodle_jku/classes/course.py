@@ -5,7 +5,10 @@ from pymoodle_jku.client.html_parser import CoursePage
 
 
 def parse_course_name(fullname):
-    return fullname.split(',')[1].strip()
+    try:
+        return fullname.split(',')[1].strip()
+    except IndexError:
+        return fullname
 
 
 @dataclass
