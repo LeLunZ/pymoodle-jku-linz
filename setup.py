@@ -9,6 +9,14 @@ try:
 except FileNotFoundError:
     long_description = ''
 
+try:
+    this_directory = Path(__file__).absolute().parent
+    with open((this_directory / 'requirements.txt'), encoding='utf-8') as f:
+        requirements = f.readlines()
+    requirements = [line.strip() for line in requirements]
+except FileNotFoundError:
+    requirements = []
+
 setup(
     name='pymoodle-jku',
     long_description_content_type='text/markdown',
@@ -22,21 +30,7 @@ setup(
     url='https://github.com/LeLunZ/pymoodle-jku-linz',
     download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/1.1.1.tar.gz',
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
-    install_requires=[
-        'argcomplete',
-        'cryptography',
-        'html2markdown',
-        'keyring',
-        'pick',
-        'pytube',
-        'lxml',
-        'urllib3',
-        'sty',
-        'packaging',
-        'requests',
-        'requests-futures',
-        'io-uuid'
-    ],
+    install_requires=requirements,
     python_requires='>=3.8',
     classifiers=[
         'Development Status :: 3 - Alpha',

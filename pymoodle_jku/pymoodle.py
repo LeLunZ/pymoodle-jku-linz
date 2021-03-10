@@ -106,14 +106,27 @@ def main():
 
     # imports are here because autocomplete is faster that way
     import atexit
+    import sys
+
+    from sty import fg
 
     from pymoodle_jku.Utils import basic
     from pymoodle_jku.Client.client import MoodleClient
     from pymoodle_jku.Utils import grades, downloading, timetable, config
     from pymoodle_jku.Utils import login
     from pymoodle_jku.Classes.exceptions import LoginError
+    from pymoodle_jku.Utils.printing import yn_question
 
     atexit.register(check_update)
+
+    supported_version = (3, 8)
+    supported_version_str = 'Python >=3.8'
+    if sys.version_info < supported_version:
+        print(fg.li_red + 'You aren\'t running a supported Python version. There could be some bugs while running.')
+        print(f'For full support install {supported_version_str}' + fg.rs)
+        continue_pymoodle = yn_question(input(fg.li_blue + 'Do you still want to continue? (y/n): ' + fg.rs))
+        if not continue_pymoodle:
+            return 0
 
     if 'utility' not in args or args.utility is None:
         all_parser = [config_parser, grades_parser, download_parser, timeline_parser, parser]
