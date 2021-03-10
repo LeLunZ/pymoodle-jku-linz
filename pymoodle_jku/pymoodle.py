@@ -1,6 +1,12 @@
+import signal
+import sys
 import argparse
 
 import argcomplete
+
+
+def interuppt_handler(signum, frame):
+    sys.exit(0)
 
 
 def check_update():
@@ -121,6 +127,7 @@ def main():
     from pymoodle_jku.utils.printing import yn_question
 
     atexit.register(check_update)
+    signal.signal(signal.SIGINT, interuppt_handler)
 
     supported_version = (3, 8)
     supported_version_str = 'Python >=3.8'
@@ -156,6 +163,6 @@ def main():
 
 if __name__ == '__main__':
     try:
-        exit(main())
+        sys.exit(main())
     except KeyboardInterrupt:
-        exit(0)
+        sys.exit(0)

@@ -41,3 +41,30 @@ class Course:
 
     def __hash__(self):
         return hash(self.id)
+
+    def _cmp(self, other):
+        if (self.enddate is None or self.enddate == 0) and (other.enddate is None or other.enddate == 0):
+            return 0
+        elif (other.enddate is None or other.enddate == 0):
+            return -1
+        elif (self.enddate is None or self.enddate == 0):
+            return 1
+        return self.enddate - other.enddate
+
+    def __lt__(self, other):
+        return self._cmp(other) < 0
+
+    def __le__(self, other):
+        return self._cmp(other) <= 0
+
+    def __eq__(self, other):
+        return self._cmp(other) == 0
+
+    def __ne__(self, other):
+        return self._cmp(other) != 0
+
+    def __ge__(self, other):
+        return self._cmp(other) >= 0
+
+    def __gt__(self, other):
+        return self._cmp(other) > 0

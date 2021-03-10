@@ -54,7 +54,7 @@ def main(client: MoodleClient, args):
 
     def filter_new(c, t=now, old=args.old):
         if not old:
-            return c.enddate >= t
+            return c.enddate >= t or c.enddate is None or c.enddate == 0
         else:
             return True
 
@@ -72,13 +72,13 @@ def main(client: MoodleClient, args):
         courses = list(client.courses(load_pages=False, filter_exp=filter_new))
         if len(courses) == 0:
             print('No Courses to download. Try [-o] for older courses.')
-            exit(0)
+            return 0
         while True:
             selected = print_pick_results_table([(c.parse_name(),) for c in courses], multiselect=True)
             if type(selected) is tuple:
                 option, index = selected
                 if index == -1:
-                    exit(0)
+                    return 0
                 if index == -2:
                     if not args.old and not loaded_more:
                         loaded_more = True

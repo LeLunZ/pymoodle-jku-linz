@@ -10,7 +10,7 @@ from pymoodle_jku.utils.printing import print_pick_results_table, clean_screen, 
 @relogin
 def main(client: MoodleClient, args: Namespace):
     now = int(time.time())
-    old_filter = lambda c, t=now: c.enddate >= t
+    old_filter = lambda c, t=now: c.enddate >= t or c.enddate is None or c.enddate == 0
     if args.search:
         filter_exp = lambda c, search=args.search: any(s.lower() in c.fullname.lower() for s in search)
         if not args.old:
@@ -31,22 +31,22 @@ def main(client: MoodleClient, args: Namespace):
             print()
             print()
         print('Nothing else found')
-        exit(0)
+        return 0
 
     valuations = client.valuation_overview()
     original_valuations = valuations
     if not args.old:
         courses = client.courses(load_pages=False, filter_exp=old_filter)
-        courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
+        courses = sorted(courses, reverse=True)
         course_ids = [c.id for c in courses]
         valuations = dict([(key, val) for key, val in valuations.items() if key in course_ids])
     else:
         courses = client.courses(load_pages=False)
-        courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
+        courses = sorted(courses, reverse=True)
         valuations = dict([(key, val) for key, val in valuations.items()])
     if len(courses) == 0:
         print('No Courses to display. Try [-o] for older courses.')
-        exit(0)
+        return 0
     if args.quiet:
         print_array_results_table([(f'{parse_course_name(val[0])}', f'{val[1]}') for key, val in valuations.items()],
                                   ['Course', 'Points'])
@@ -62,13 +62,13 @@ def main(client: MoodleClient, args: Namespace):
             clean_screen()
             element, index = print_pick_results_table(vals)
             if index == -1:
-                exit(0)
+                return 0
             if index == -2:
                 # load more data if possible
                 if not args.old and not loaded_more:
                     loaded_more = True
                     courses = client.courses(load_pages=False)
-                    courses = sorted(courses, key=lambda c: c.enddate, reverse=True)
+                    courses = sorted(courses, reverse=True)
                     vals = []
                     for c in courses:
                         if c.id in original_valuations.keys():
