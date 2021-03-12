@@ -10,7 +10,7 @@ It's also a python library, which you can use in your project.
 [Description](#Description) </br>
 [Install](#Install) </br>
 [Terminal Application](#Commandline-Scripts) </br>
-[Python Package](#Python-Package) </br>
+[Development](#Development) </br>
 [Dependencies and Unittests](#Good-To-Know) </br>
 [Unsupported](#Unsupported) </br>
 [Contribution](#Contribution) </br>
@@ -103,7 +103,10 @@ or `-s` to search for courses.
 Timeline shows your next few moodle events from the moodle calendar. The only argument you could specify is the max
 limit of events to show (`--limits 15`).
 
-## Python Package
+## Development
+
+If you want to run pymoodle locally:
+`python3 -m pymoodle_jku.pymoodle`
 
 There are multiple examples how to use the PyMoodle package. Just look in
 the [examples](https://github.com/LeLunZ/pymoodle-jku-linz/tree/main/examples) folder and start
