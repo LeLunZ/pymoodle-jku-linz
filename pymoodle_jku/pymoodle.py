@@ -59,7 +59,7 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='the script will ask for no input (useful in Docker environments)')
 
-    parser.add_argument('-t', '--threads', default=6, type=int,
+    parser.add_argument('-t', '--threads', default=8, type=int,
                         help='max amount of threads to use for crawling. Value doesn\t persist. See config for more.')
     parser.add_argument('-c', '--credentials', nargs=2, metavar=('username', 'password'),
                         help='JKU username and password. (Optional, if not provided you will be asked to Enter it)')
@@ -114,8 +114,9 @@ def main():
     args = parser.parse_args()
 
     # imports are here because autocomplete is faster that way
-    import atexit
     import sys
+    import atexit
+    import logging
 
     from sty import fg
 
@@ -125,7 +126,9 @@ def main():
     from pymoodle_jku.utils import login
     from pymoodle_jku.classes.exceptions import LoginError
     from pymoodle_jku.utils.printing import yn_question
+    logger = logging.getLogger(__name__)
 
+    logger.debug('PyMoodle start')
     atexit.register(check_update)
     signal.signal(signal.SIGINT, interuppt_handler)
 

@@ -3,7 +3,9 @@ import time
 from pathlib import Path
 from typing import Union, List, Tuple
 
-from pymoodle_jku.classes.course_data import Url
+from sty import fg
+
+from pymoodle_jku.classes.course_data import Url, UrlType
 from pymoodle_jku.classes.evaluation import Evaluation
 from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.client.download_manager import DownloadManager
@@ -12,10 +14,6 @@ from pymoodle_jku.utils.login import relogin
 from pymoodle_jku.utils.printing import print_pick_results_table
 
 logger = logging.getLogger(__name__)
-
-
-def debug(msg):
-    logger.debug(f'UniJob: {msg}')
 
 
 def get_all_downloads(dir_: Path, links: List[Union[Url, Evaluation]]) -> Tuple[
@@ -89,7 +87,8 @@ def main(client: MoodleClient, args):
         courses = client.courses(load_pages=picked_courses)
 
     count = 0
-    for c in courses:
+    start = time.time()
+    for c in list(courses):
         count += 1
         cur_dir = path / (c.parse_name())
         try:
@@ -114,10 +113,14 @@ def main(client: MoodleClient, args):
         write_urls(path, finished_url)
         del dm
 
-        debug(f'done with {c.shortname}')
+        print(fg.li_green + f'Done with {c.parse_name()}' + fg.rs)
 
+    end = time.time()
+    print(f'{(end - start) / 60} minutes runtime')
     if count == 0:
         print('No Courses to download. Try [-o] for older courses.')
+
+    return 0
 
 
 if __name__ == "__main__":

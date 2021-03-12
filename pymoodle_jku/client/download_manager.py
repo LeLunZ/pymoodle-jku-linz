@@ -1,10 +1,12 @@
+import logging
 import re
 import subprocess
 import time
 import traceback
 from concurrent.futures import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from pathlib import Path
-from typing import Union, Tuple, Optional, List
+from typing import Tuple, Optional, List
 from urllib.parse import unquote, urlparse
 
 import iouuid
@@ -16,6 +18,8 @@ from pymoodle_jku.classes.evaluation import Evaluation
 from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.client.html_parser import QuizSummary, QuizPage
 from pymoodle_jku.utils.printing import print_exc
+
+logger = logging.getLogger(__name__)
 
 
 def rsuffix(suffix) -> str:
@@ -78,7 +82,7 @@ class DownloadManager:
             weblink = l.link
             response = self.client.session.get(l.link)
         else:
-            raise Exception('wrong class')
+            raise Exception('wrong class')  # TODO Add other exception type
         q_page = QuizSummary(response)
         u = q_page.quiz_url()
         if u is None:
@@ -116,7 +120,7 @@ class DownloadManager:
 
         return True, weblink, self.path / filename
 
-    def _decide_download_source(self, l):
+    def _prepare_download_source(self, l):
         """
         Calls the corresponding method for the object l if l is downloadable.
         """
@@ -139,20 +143,13 @@ class DownloadManager:
                 return return_false(l)
         except (SystemExit, KeyboardInterrupt, GeneratorExit):
             raise
-        except Exception as er:
+        except Exception:
             # Never let any exception go outside of this. So that we can always return a failed download.
             # traceback.print_exc()
+            website = l.url if type(l) is Evaluation else l.link
             if type(l) is Evaluation:
                 return False, l.url, None
             return False, l.link, None
-
-    def _download(self, l):
-        """Adds the download to a ThreadPool.
-
-        :param l: A Object to download.
-        :return: Future of the download.
-        """
-        return self.client.future_session.executor.submit(self._decide_download_source, l)
 
     def download(self) -> None:
         """Downloads the urls to the path in the filesystem.
@@ -160,18 +157,24 @@ class DownloadManager:
 
         :return: Nothing
         """
-        futures = [d for l in self.urls if (d := self._download(l)) is not None]
-        for f in as_completed(futures):
-            try:
-                done, url, file = f.result()
-                if done:
-                    self.done.append((url, file))
-                else:
-                    self.failed.append(url)
-            except (SystemExit, KeyboardInterrupt, GeneratorExit):
-                raise
-            except Exception as e:
-                print_exc(e)
+        lengths = len(self.urls)
+        with ThreadPoolExecutor() as executor:
+            print(f"Downloading {len(self.urls)} items")
+            futures = [executor.submit(self._prepare_download_source, url) for url in self.urls]
+            for f in as_completed(futures):
+                try:
+                    done, url, file = f.result()
+                    logger.info(f'received: {url}')
+                    if done:
+                        self.done.append((url, file))
+                    else:
+                        self.failed.append(url)
+                except (SystemExit, KeyboardInterrupt, GeneratorExit) as err:
+                    raise
+                except Exception as e:
+                    print_exc(e)
+                    logger.error(e)
+                print(f'{len(self.done) + len(self.failed)}/{lengths}', end='\r')
 
     def download_from_url(self, url) -> Tuple[bool, str, Optional[Path]]:
         """Downloads a file from a url. If its a moodle url it will call process_response with the response object.
@@ -204,7 +207,7 @@ class DownloadManager:
 
             filename = download_obj.default_filename
             filename = iouuid.generate_id(self.path / filename, size=2)
-            download_obj.download(output_path=self.path, filename=filename)
+            download_obj.download(output_path=self.path, filename=Path(filename).stem)
             return True, url, self.path / filename
         else:
             return self.process_response(url, response)
@@ -220,7 +223,7 @@ class DownloadManager:
         """
         if (cnt_dis := response.headers.get('Content-Disposition')) is not None:
             filename = cnt_dis.split('filename="')[1][:-1]
-            size = 1024 * 1024 * 20
+            size = 1024 * 1024
             chunk = next(response.iter_content(chunk_size=size))
             try:
                 data = chunk.decode()
@@ -243,14 +246,10 @@ class DownloadManager:
 
     def _download_stream_with_ffmpeg(self, url, filename):
         process = subprocess.Popen(
-            ['ffmpeg', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
+            ['ffmpeg', '-y', '-protocol_whitelist', 'file,blob,http,https,tcp,tls,crypto', '-i',
              url,
              '-c', 'copy',
-             self.path / filename])
-        if process.poll() is None:  # just press y for the whole time to accept everything we get asked (secure? no.)
-            process.communicate('y\n')
-            process.communicate('y\n')
-            process.communicate('y\n')
+             self.path / filename], stderr=subprocess.DEVNULL)
         return_code = process.wait(timeout=30 * 60)
         return return_code
 
@@ -265,11 +264,11 @@ class DownloadManager:
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]
         link = video.get('src')
         url = link
-        filename = iouuid.generate_id(self.path / Path(unquote(url)).name, rsuffix=rsuffix, size=2)
+        link_path = Path(unquote(url))
+        filename = iouuid.generate_id(self.path / link_path.name, rsuffix=rsuffix, size=2)
         return_code = self._download_stream_with_ffmpeg(url, filename)
-        if return_code != 0:
+        if return_code != 0 and not (self.path / filename).is_file():
             return_code = self._download_stream_with_ffmpeg(url, filename)  # try a second time if download fails.
         if return_code != 0:
             return False, l.link, None
-        time.sleep(0.5)  # dont remove it was important in some way
         return True, l.link, self.path / filename

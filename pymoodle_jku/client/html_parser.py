@@ -52,7 +52,7 @@ class QuizSummary(MainRegion):
                                      Path(unquote(urlparse(url).path)).parts[3].capitalize()])).type is UrlType.Quiz and \
                         Path(unquote(urlparse(url).path)).parts[4] == 'review.php':
                     return u
-            except (KeyError, ValueError, IndexError, AttributeError) as err:
+            except (KeyError, ValueError, IndexError, AttributeError):
                 # print(err)
                 pass
         else:

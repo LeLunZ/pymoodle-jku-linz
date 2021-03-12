@@ -37,7 +37,7 @@ def requests_retry_session(
         connect=retries,
         backoff_factor=backoff_factor
     )
-    adapter = HTTPAdapter(max_retries=retry)
+    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=100, pool_connections=20)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
