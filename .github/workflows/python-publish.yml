@@ -48,3 +48,12 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
+    - name: Upload to Release
+      if: github.event_name == 'release'
+      uses: svenstaro/upload-release-action@2.2.1
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: dist/*.tar.gz
+        tag: ${{ github.ref }}
+        file_glob: true
+
