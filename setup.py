@@ -41,8 +41,6 @@ setup(
         'Topic :: Utilities',
         'Topic :: Education',
         'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
-        'Topic :: Multimedia:: Sound/Audio',
-        'Topic :: Multimedia :: Video',
         'Typing :: Typed',
         'License :: OSI Approved :: BSD License',
         'Environment :: Console',
