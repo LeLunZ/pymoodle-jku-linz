@@ -5,6 +5,7 @@ from enum import Enum
 class UrlType(Enum):
     """
     Represents the Ressource Type of links on Moodle.
+    https://docs.moodle.org/400/en/Resources
     """
     Streamurl = 0  # stream
     Resource = 1
@@ -19,7 +20,10 @@ class UrlType(Enum):
     Forum = 10
     Checkmark = 11
     Wiki = 11
-    
+    Feedback = 12
+    Book = 13
+    Chat = 14
+
 
 @dataclass
 class Url:

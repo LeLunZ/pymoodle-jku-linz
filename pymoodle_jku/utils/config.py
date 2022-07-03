@@ -8,6 +8,7 @@ from pick import pick
 from pymoodle_jku.classes.exceptions import LoginError
 from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.utils.config_data import config, set_new_user, write_config, config_file
+from pymoodle_jku.utils.logging import log_file
 from pymoodle_jku.utils.printing import clean_screen, yn_question
 
 
@@ -16,7 +17,8 @@ def build_questions():
                  f'Set default download directory, if not set the directory where you run pymoodle will be used.' if
                  config[
                      'Path'] is None else f'Change or disable default download directory ({Path(config["Path"])})',
-                 f'Set max amount of Threads to use for crawling ({config["Threads"]})',
+                 f'Disable logging to {log_file}' if config.getboolean(
+                     'Logging') else f'Enable logging to {log_file}',
                  f'Disable Save Password Question for new user' if config.getboolean(
                      'SaveQuestion') else 'Enable Save Password Question for new user',
                  f'Disable check for updates' if config.getboolean('UpdateInfo') else 'Enable check for updates',
@@ -27,9 +29,6 @@ def build_questions():
 
 def main(args):
     interactive = True
-    if args.threads:
-        interactive = False
-        config['Threads'] = args.threads
     if args.directory:
         interactive = False
         config['Path'] = args.path
@@ -72,11 +71,11 @@ def main(args):
                         raise Exception('Directory doesn\'t exist.')
                     config['Path'] = str(storage_path)
             elif idx == 2:
-                try:
-                    threads = int(input('Max Threads: '))
-                    config['Threads'] = str(threads)
-                except ValueError:
-                    pass
+                question = 'Sure that you want to disable logging? \nFilesize is limited to 20mb \nLogs don\'t get send anywhere.\nStill want to disable it?' if config.getboolean(
+                    'Logging') else 'Enable?'
+                save_password = yn_question(question)
+                if save_password:
+                    config['Logging'] = str(not config.getboolean('Logging'))
             elif idx == 3:
                 question = 'Disable?' if config.getboolean('SaveQuestion') else 'Enable?'
                 save_password = yn_question(question)

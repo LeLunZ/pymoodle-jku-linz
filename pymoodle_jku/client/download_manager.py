@@ -17,10 +17,13 @@ from pymoodle_jku.classes.course_data import UrlType, Url
 from pymoodle_jku.classes.evaluation import Evaluation
 from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.client.html_parser import QuizSummary, QuizPage
-from pymoodle_jku.utils.printing import print_exc
+from pymoodle_jku.utils.net_usage import net_usage
+from pymoodle_jku.utils.printing import print_exc, yn_question
 
 logger = logging.getLogger(__name__)
 
+
+# https://stackoverflow.com/questions/62020140/psutil-network-monitoring-script
 
 def rsuffix(suffix) -> str:
     """Returns a new suffix for some files.
@@ -36,18 +39,21 @@ def rsuffix(suffix) -> str:
 
 
 class DownloadManager:
-    def __init__(self, urls, client: 'MoodleClient', path):
+    def __init__(self, urls, client: 'MoodleClient', path, download_speed, net_interface):
         """Takes Objects which should be downloaded with a Moodle client.
 
         :param urls: A List of Objects to download. The DownloadManager will check if these are downloadable.
         :param client: A instance of a MoodleClient, that should be logged in.
         :param path: The directory where downloads are stored.
         """
+        self.futures = []
         self.urls = urls
         self.failed = []
         self.done: List[Tuple[str, Path]] = []
         self.client = client
         self.path = Path(path)
+        self.download_speed = download_speed
+        self.net_interface = net_interface
 
     def get_request(self, url):
         """Sends a GET requests to download files.
@@ -55,6 +61,7 @@ class DownloadManager:
         :param url: Link to a file.
         :return: Calls process_response on return.
         """
+        print(f'Starting download of {url}')
         response = self.client.session.get(url, stream=True)
         return self.process_response(url, response)
 
@@ -64,6 +71,7 @@ class DownloadManager:
         :param url: Link to a file.
         :return: Calls process_response on return.
         """
+        print(f'Starting download of {url}')
         response = self.client.session.post('https://moodle.jku.at/jku/mod/folder/download_folder.php',
                                             data={'id': url.split('id=')[1].split('&')[0],
                                                   'sesskey': self.client.sesskey}, stream=True)
@@ -75,6 +83,7 @@ class DownloadManager:
         :param l: Evaluation or Url to download.
         :return: A Tuple that describes the download (finished,url,path).
         """
+        print(f'Starting download of {l.link}')
         if type(l) is Evaluation:
             weblink = l.url
             response = self.client.session.get(l.url)
@@ -82,7 +91,7 @@ class DownloadManager:
             weblink = l.link
             response = self.client.session.get(l.link)
         else:
-            raise Exception('wrong class')  # TODO Add other exception type
+            raise TypeError('wrong class instance')
         q_page = QuizSummary(response)
         u = q_page.quiz_url()
         if u is None:
@@ -93,8 +102,9 @@ class DownloadManager:
         qz_page = QuizPage(response)
         output = qz_page.md_quiz()
 
-        name = re.sub('[^\w\-_\.\(\) ]', '', l.name)
-        name = re.sub('[ ]', '_', name)
+        name = re.sub(r'[^\w\s-]', '', q_page.name.lower())
+        name = re.sub(r'[-\s]+', '-', name).strip('-_')
+        name = name.replace(' ', '_')
 
         images = [im for im in qz_page.images if im in output and 'jku.at' in urlparse(str(im)).hostname]
         if len(qz_page.images) > 0:
@@ -120,36 +130,47 @@ class DownloadManager:
 
         return True, weblink, self.path / filename
 
-    def _prepare_download_source(self, l):
+    def _prepare_download_source(self, l, check=False):
         """
         Calls the corresponding method for the object l if l is downloadable.
+        Check is to check if object is downloadable.
         """
         try:
-            if type(l) is Evaluation or l.type is UrlType.Quiz:
-                return self.download_evaluation(l)
-            if l.type is UrlType.Resource:
-                return self.get_request(l.link)
+            if l.type is UrlType.Quiz:
+                return True if check else self.download_evaluation(l)
+            elif l.type is UrlType.Resource:
+                return True if check else self.get_request(l.link)
             elif l.type is UrlType.Folder:
-                return self.post_request(l.link)
+                return True if check else self.post_request(l.link)
             elif l.type is UrlType.Streamurl:
-                return self._download_stream(l)
+                return True if check else self._download_stream(l)
             elif l.type is UrlType.Url:
-                return self.download_from_url(l.link)
+                return True if check else self.download_from_url(l.link)
             else:
+                if check:
+                    return False
+
                 # return false because if we later add the datatype we still want to download it.
                 def return_false(l):
                     return False, l.link, None
 
                 return return_false(l)
-        except (SystemExit, KeyboardInterrupt, GeneratorExit):
+        except KeyboardInterrupt:
+            input("Want to continue?")
+            if not yn_question("Still want to continue?"):
+                raise
+        except (SystemExit, GeneratorExit):
             raise
         except Exception:
             # Never let any exception go outside of this. So that we can always return a failed download.
             # traceback.print_exc()
-            website = l.url if type(l) is Evaluation else l.link
-            if type(l) is Evaluation:
-                return False, l.url, None
             return False, l.link, None
+
+    def get_done_futures(self):
+        return [f.result() for f in self.futures if self._is_success(f)]
+
+    def _is_success(self, dl_future):
+        return dl_future.done() and not dl_future.cancelled() and dl_future.exception() is None
 
     def download(self) -> None:
         """Downloads the urls to the path in the filesystem.
@@ -158,23 +179,49 @@ class DownloadManager:
         :return: Nothing
         """
         lengths = len(self.urls)
-        with ThreadPoolExecutor() as executor:
-            print(f"Downloading {len(self.urls)} items")
-            futures = [executor.submit(self._prepare_download_source, url) for url in self.urls]
-            for f in as_completed(futures):
-                try:
-                    done, url, file = f.result()
-                    logger.info(f'received: {url}')
-                    if done:
-                        self.done.append((url, file))
-                    else:
-                        self.failed.append(url)
-                except (SystemExit, KeyboardInterrupt, GeneratorExit) as err:
-                    raise
-                except Exception as e:
-                    print_exc(e)
-                    logger.error(e)
-                print(f'{len(self.done) + len(self.failed)}/{lengths}', end='\r')
+        try:
+            with ThreadPoolExecutor() as executor:
+                print(f"Downloading {len(self.urls)} items")
+
+                self.futures = []
+
+                for url in self.urls:
+                    if not self._prepare_download_source(url, check=True):
+                        self.failed.append(url.link)
+                        continue
+                    inet_usage = net_usage(self.net_interface)
+                    download_speed = inet_usage[0]
+                    print(f"Current net-usage:\nIN: {download_speed} Mbit/s")
+                    while download_speed > self.download_speed - 5:
+                        inet_usage = net_usage(self.net_interface)  # there is a 1 sec wait in net_usage
+                        download_speed = inet_usage[0]
+                        print(f"Current net-usage:\nIN: {download_speed} Mbit/s")
+                    self.futures.append(executor.submit(self._prepare_download_source, url))
+                    time.sleep(0.5)  # wait half a second till download started
+                for f in as_completed(self.futures):
+                    # todo reimplement as completed for my own needs
+                    try:
+                        done, url, file = f.result()
+                        logger.info(f'received: {url}')
+                        if done:
+                            self.done.append((url, file))
+                        else:
+                            self.failed.append(url)
+                    except (SystemExit, KeyboardInterrupt, GeneratorExit):
+                        raise
+                    except Exception as e:
+                        print_exc(e)
+                        logger.error(e)
+                    print(f'{len(self.done) + len(self.failed)}/{lengths}', end='\r')
+                self.futures = []
+        except KeyboardInterrupt:
+            if yn_question('Do you want to stop pymoodle?'):
+                raise
+        except (SystemExit, GeneratorExit) as err:
+            raise
+        except Exception as e:
+            print_exc(e)
+            logger.error(e)
 
     def download_from_url(self, url) -> Tuple[bool, str, Optional[Path]]:
         """Downloads a file from a url. If its a moodle url it will call process_response with the response object.
@@ -183,6 +230,7 @@ class DownloadManager:
         :param url: Link to the Download.
         :return: A Tuple that describes the download (finished,url,path).
         """
+        print(f'Starting download of {url}')
         p = Path(url)
         link = url
         if '?' in p.name and '=' in p.name:  # doing this for moodle download
@@ -259,6 +307,7 @@ class DownloadManager:
         :param l: A Url object to download.
         :return: A Tuple that describes the download (finished,url,path).
         """
+        print(f'Starting download of {l.link}')
         response = self.client.session.get(l.link)
         tree = html.fromstring(response.content.decode('utf-8'))
         video = tree.xpath('//*[not(self::head)]/*[@src and (@type or self::video) and not(self::script)]')[0]

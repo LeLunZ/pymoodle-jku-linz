@@ -33,6 +33,8 @@ class Course:
     isfavourite: bool
     hidden: bool
     showshortname: bool
+    showactivitydates: bool
+    showcompletionconditions: object  # don't know what this is
     coursecategory: str
     course_page: Union[CoursePage, None] = None
 

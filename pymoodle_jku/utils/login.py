@@ -35,7 +35,7 @@ def relogin(func):
                 client.clear_client()
                 config['Session'] = None
                 write_config()
-                new_client = login(args.credentials, args.threads, client)
+                new_client = login(args.credentials, client)
                 if new_client is None:
                     raise
                 else:
@@ -69,6 +69,8 @@ def load_client(client):
     token = config['Session']
     if f is not None and token is not None:
         cookies, sesskey, userid = pickle.loads(f.decrypt(token.encode()))
+        if userid is None:
+            return False
         client.login_with_old_session(cookies, sesskey, userid)
         return True
     return False
@@ -91,7 +93,7 @@ def register_atexit(client):
         registered = True
 
 
-def login(credentials, threads: int = None, client: MoodleClient = None) -> Optional[MoodleClient]:
+def login(credentials, client: MoodleClient = None) -> Optional[MoodleClient]:
     """
     Tries to Login the user multiple times or uses a .
 
@@ -101,7 +103,7 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
     :return: A Moodle client if login worked, else None
     """
     client_prepared = client is not None
-    client = client or MoodleClient(pool_executor=ThreadPoolExecutor(max_workers=threads or config.getint('Threads')))
+    client = client or MoodleClient(pool_executor=ThreadPoolExecutor())
 
     new_credentials = False
     username, password = credentials or (config.get('Username'), None)
@@ -114,7 +116,7 @@ def login(credentials, threads: int = None, client: MoodleClient = None) -> Opti
         if not client_prepared:
             try:
                 auth = load_client(client)
-            except (KeyError, pickle.UnpicklingError, InvalidToken, AttributeError):
+            except (KeyError, pickle.UnpicklingError, InvalidToken, AttributeError, NotLoggedInError):
                 auth = False
             if auth:
                 return client

@@ -5,7 +5,7 @@ import argparse
 import argcomplete
 
 
-def interuppt_handler(signum, frame):
+def interrupt_handler(signum, frame):
     sys.exit(0)
 
 
@@ -59,8 +59,6 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='the script will ask for no input (useful in Docker environments)')
 
-    parser.add_argument('-t', '--threads', default=8, type=int,
-                        help='max amount of threads to use for crawling. Value doesn\t persist. See config for more.')
     parser.add_argument('-c', '--credentials', nargs=2, metavar=('username', 'password'),
                         help='JKU username and password. (Optional, if not provided you will be asked to Enter it)')
 
@@ -87,11 +85,14 @@ def main():
     download_parser.add_argument('-a', '--all', action='store_true',
                                  help='Downloads all courses of the current semester. If run with [-o] all courses from older semesters get downloaded.')
 
-    download_parser.add_argument('-e', '--exams', action='store_true',
-                                 help='Will download only Exams, even if they are already in urls.txt. This option exists because previously exam urls were written into urls.txt but exams werent downloaded. This option will also get removed at the end of next semester.')
-
     download_parser.add_argument('-o', '--old', action='store_true',
                                  help='Use if you want to download old courses.')
+
+    download_parser.add_argument('--speed', type=float,
+                                 help='Max Internet downlaod speed')
+
+    download_parser.add_argument('--interface', type=str,
+                                 help='Interface which is currently used (example eth0 or en0)')
 
     timeline_parser = subparsers.add_parser('timeline', help='Timeline Utility')
 
@@ -120,24 +121,28 @@ def main():
 
     from sty import fg
 
-    from pymoodle_jku.utils import basic
     from pymoodle_jku.client.client import MoodleClient
-    from pymoodle_jku.utils import grades, downloading, timetable, config
+    from pymoodle_jku.utils import config
+    from pymoodle_jku.scripts import timetable
+    from pymoodle_jku.scripts import basic
+    from pymoodle_jku.scripts import downloading
+    from pymoodle_jku.scripts import grades
     from pymoodle_jku.utils import login
     from pymoodle_jku.classes.exceptions import LoginError
     from pymoodle_jku.utils.printing import yn_question
+
     logger = logging.getLogger(__name__)
 
     logger.debug('PyMoodle start')
     atexit.register(check_update)
-    signal.signal(signal.SIGINT, interuppt_handler)
+    signal.signal(signal.SIGINT, interrupt_handler)
 
     supported_version = (3, 8)
     supported_version_str = 'Python >=3.8'
     if sys.version_info < supported_version:
         print(fg.li_red + 'You aren\'t running a supported Python version. There could be some bugs while running.')
         print(f'For full support install {supported_version_str}' + fg.rs)
-        continue_pymoodle = yn_question(input(fg.li_blue + 'Do you still want to continue?' + fg.rs))
+        continue_pymoodle = yn_question(fg.li_blue + 'Do you still want to continue?' + fg.rs)
         if not continue_pymoodle:
             return 0
 
@@ -149,8 +154,7 @@ def main():
         if args.utility == 'config':
             return config.main(args)
 
-        client: MoodleClient = login.login(credentials=args.credentials,
-                                           threads=args.threads)
+        client: MoodleClient = login.login(credentials=args.credentials)
 
         if client is None:
             raise LoginError('Try again. Login Failed.')

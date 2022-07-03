@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional, List
 from urllib.parse import urlparse, unquote, parse_qs
 
-import html2markdown as html2markdown
+import antimarkdown
 from lxml import html, etree
 from lxml.etree import _ElementUnicodeResult
 from lxml.html.clean import Cleaner
@@ -36,6 +36,15 @@ class QuizSummary(MainRegion):
     """
     QuizSummary is the Page where you can press "Review Quiz" on moodle.
     """
+
+    def __init__(self, response):
+        """
+        QuizPage is real Quiz Page, where all answers and questions are visible.
+        :param response: A Response to extract the quiz from.
+        """
+        super().__init__(response)
+        self.main = self.region.xpath('.//div[@role="main"]')[0]
+        self.name = self.main.xpath('.//h2/text()')[0]
 
     def quiz_url(self) -> Optional[Url]:
         """
@@ -76,7 +85,7 @@ def convert_elements(elements) -> str:
             output += '\n'.join([line.strip() for line in str(e).splitlines()]) + '\n'
         else:
             e.attrib.clear()
-            conv = html2markdown.convert(cleaner.clean_html(d_utf8(etree.tostring(e))))
+            conv = antimarkdown.to_markdown(cleaner.clean_html(d_utf8(etree.tostring(e))))
             output += '\n'.join([line.strip() for line in conv.splitlines()])
         output += '\n'
     output += '\n'
@@ -113,7 +122,7 @@ class QuizPage(MainRegion):
         """
         questions = zip(self.info, self.questions)
 
-        summary = html2markdown.convert(d_utf8(etree.tostring(self.summary))) + '\n'
+        summary = antimarkdown.to_markdown(d_utf8(etree.tostring(self.summary))) + '\n'
 
         # markdownify isnt parsing tables
         # tomd is removing a lot of stuff ()
@@ -185,6 +194,38 @@ class CoursePage(MainRegion):
         return cd
 
 
+class PreLoginPage:
+    def __init__(self, action, data):
+        """
+        Login Page is the login page of JKU.
+        :param action: Is the form action of a html form.
+        :param data: Is the data of this form as dict.
+        """
+        self.data = data
+        self.action = action
+
+    @staticmethod
+    def from_response(response) -> 'PreLoginPage':
+        """
+        Creates a LoginPage from a Response.
+        :param response: A Response from some request.
+        :return: The LoginPage of the response.
+        """
+        tree = html.fromstring(response.content.decode('utf-8'))
+        form_action = tree.xpath('//form/@action')[0]
+        form = tree.xpath('//form/input')
+        data = {}
+        for inp in form:
+            name = inp.xpath('./@name')[0]
+            if len(values := inp.xpath('./@value')) == 0:
+                values = ['']
+
+            value = values[0]
+            data[name] = value
+
+        return PreLoginPage(form_action, data)
+
+
 class LoginPage:
     def __init__(self, action, data):
         """
@@ -204,7 +245,7 @@ class LoginPage:
         """
         tree = html.fromstring(response.content.decode('utf-8'))
         form_action = tree.xpath('//form/@action')[0]
-        form = tree.xpath('//form/div/input')
+        form = tree.xpath('//form/input')
         data = {}
         for inp in form:
             name = inp.xpath('./@name')[0]
@@ -212,6 +253,38 @@ class LoginPage:
             data[name] = value
 
         return LoginPage(form_action, data)
+
+
+class PostLoginPage:
+    def __init__(self, action, data):
+        """
+        Login Page is the login page of JKU.
+        :param action: Is the form action of a html form.
+        :param data: Is the data of this form as dict.
+        """
+        self.data = data
+        self.action = action
+
+    @staticmethod
+    def from_response(response) -> 'PostLoginPage':
+        """
+        Creates a LoginPage from a Response.
+        :param response: A Response from some request.
+        :return: The LoginPage of the response.
+        """
+        tree = html.fromstring(response.content.decode('utf-8'))
+        form_action = tree.xpath('//form/@action')[0]
+        form = tree.xpath('//form/div/input')
+        data = {}
+        for inp in form:
+            name = inp.xpath('./@name')[0]
+            if len(values := inp.xpath('./@value')) == 0:
+                values = ['']
+
+            value = values[0]
+            data[name] = value
+
+        return PostLoginPage(form_action, data)
 
 
 class MyPage:
@@ -250,7 +323,7 @@ class MyPage:
                     break
                 count += 1
             sesskey = sesskey
-        pref_url = re.escape('https://moodle.jku.at/jku/message/notificationpreferences.php?userid=')
+        pref_url = re.escape('https://moodle.jku.at/jku/user/profile.php?id=')
         found_item = re.findall(f'{pref_url}(\d+)', content)
         if len(found_item) > 0:
             userid = int(found_item[0])
@@ -305,7 +378,8 @@ class ValuationPage(MainRegion):
                 continue
             name, url, criteria = row.xpath('./th/a/text()')[0], row.xpath('./th/a/@href')[0], row.xpath('./td/text()')
             grade, grade_range = criteria[index_grade - 1], criteria[index_range - 1]
+
             evaluations.append(
-                Evaluation(name, str(url), UrlType[Path(unquote(urlparse(url).path)).parts[3].capitalize()], grade,
+                Evaluation(name, Url(str(url), UrlType[Path(unquote(urlparse(url).path)).parts[3].capitalize()]), grade,
                            grade_range))
         return evaluations

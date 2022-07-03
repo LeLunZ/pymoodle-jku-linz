@@ -1,20 +1,23 @@
 import json
+import os
 import time
 from concurrent.futures import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
+
 from typing import Union, List, Callable, Tuple, Generator, Iterator, Optional, Type
 
 import requests
 from requests.adapters import HTTPAdapter
 from requests_futures.sessions import FuturesSession
 from urllib3 import Retry
+from urllib.parse import urljoin
 
 from pymoodle_jku.classes.course import Course
 from pymoodle_jku.classes.evaluation import Evaluation
 from pymoodle_jku.classes.events import Event
 from pymoodle_jku.classes.exceptions import NotLoggedInError, LoginError
 from pymoodle_jku.client.html_parser import LoginPage, MyPage, \
-    ValuationOverviewPage, CoursePage, ValuationPage
+    ValuationOverviewPage, CoursePage, ValuationPage, PreLoginPage, PostLoginPage
 from pymoodle_jku.utils.printing import print_exc
 
 
@@ -37,7 +40,9 @@ def requests_retry_session(
         connect=retries,
         backoff_factor=backoff_factor
     )
-    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=100, pool_connections=20)
+
+    max_size = min(32, (os.cpu_count() or 1) + 4) * 3
+    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=max_size, pool_connections=20)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
@@ -67,7 +72,8 @@ def requests_retry_session_async(
         connect=retries,
         backoff_factor=backoff_factor
     )
-    adapter = HTTPAdapter(max_retries=retry)
+    max_size = min(32, (os.cpu_count() or 1) + 4) * 3
+    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=max_size, pool_connections=20)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
@@ -81,6 +87,14 @@ class MoodleClient:
         self.sesskey = sesskey
         self.userid = userid
         self.session.cookies.update(cookies)
+
+        # if no error is thrown we are logged in
+        # checked in check_request
+        response = self.session.get('https://moodle.jku.at/jku/my/')
+
+        # other possibility
+        # call https://moodle.jku.at/ and check if there was a redirect to https://moodle.jku.at/jku/my/
+        # if not we are not logged in
 
     def clear_client(self):
         self.sesskey = None
@@ -99,18 +113,22 @@ class MoodleClient:
             raise LoginError('Provide Username or Password')
         try:
             self.session.cookies.clear()
-            response = self.session.get('https://moodle.jku.at/jku/login/index.php')
             headers = {'Content-type': 'application/x-www-form-urlencoded'}
-            url = response.url
-            # session_id = url.split('jsessionid=')[1].split('?')[0]
-            response = self.session.post(url, data={'j_username': username, 'j_password': password,
-                                                    '_eventId_proceed': 'Login'}, headers=headers)
+            response = self.session.post('https://moodle.jku.at/jku/login/index.php', headers=headers)
 
-            # parsing Login page
+            pre_login_page = PreLoginPage.from_response(response)
+
+            response = self.session.post(urljoin(response.url, pre_login_page.action), data=pre_login_page.data,
+                                         headers=headers, allow_redirects=True)
+
             l_page = LoginPage.from_response(response)
-            response = self.session.post(l_page.action, data=l_page.data, headers=headers)
+            response = self.session.post(urljoin(response.url, l_page.action),
+                                         data=l_page.data | {'j_username': username, 'j_password': password},
+                                         headers=headers)
 
-            response = self.session.get('https://moodle.jku.at/')
+            post_login_page = PostLoginPage.from_response(response)
+            response = self.session.post(post_login_page.action, data=post_login_page.data, headers=headers)
+
             m_page = MyPage.from_response(response)
 
             self.sesskey, self.userid = m_page.sesskey, m_page.userid
@@ -277,7 +295,7 @@ class MoodleClient:
         else:
             if '<a href="https://moodle.jku.at/jku/login/index.php">' in r.text and r.is_redirect:
                 raise NotLoggedInError('Please Login')
-            if '<title>jku: Dashboard (GUEST)</title>' in r.text:
+            if '<title>jku: Dashboard (Guest)</title>' in r.text or '<title>jku: Dashboard (Gast)</title>' in r.text:
                 raise NotLoggedInError('Please login.')
 
         def check_url(url, redirect_url, redirect):

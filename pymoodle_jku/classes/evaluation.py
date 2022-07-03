@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from pymoodle_jku.classes.course_data import UrlType
+from pymoodle_jku.classes.course_data import UrlType, Url
 
 
 @dataclass
@@ -9,7 +9,6 @@ class Evaluation:
     A Evaluation for a Quiz or Assignment on Moodle.
     """
     name: str
-    url: str
-    type: UrlType
+    url: Url
     grade: str
     grade_range: str

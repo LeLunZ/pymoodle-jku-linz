@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Union, List, Tuple
 
 from sty import fg
+import atexit
 
 from pymoodle_jku.classes.course_data import Url, UrlType
 from pymoodle_jku.classes.evaluation import Evaluation
@@ -11,6 +12,7 @@ from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.client.download_manager import DownloadManager
 from pymoodle_jku.utils.config import config
 from pymoodle_jku.utils.login import relogin
+from pymoodle_jku.utils.net_usage import net_interfaces
 from pymoodle_jku.utils.printing import print_pick_results_table
 
 logger = logging.getLogger(__name__)
@@ -27,7 +29,7 @@ def get_all_downloads(dir_: Path, links: List[Union[Url, Evaluation]]) -> Tuple[
     url_list = dir_ / 'urls.txt'
     try:
         urls = url_list.read_text().splitlines()
-        f = list(filter(lambda l: (l.link if type(l) is Url else l.url) not in urls, links))
+        f = list(filter(lambda l: l.link not in urls, links))
         return f, urls
     except FileNotFoundError:
         return links, []
@@ -42,6 +44,13 @@ def write_urls(dir_: Path, urls: List[str]) -> None:
     """
     url_list = dir_ / 'urls.txt'
     url_list.write_text('\n'.join(urls))
+
+
+def handle_exit(dl_manager: DownloadManager, path: Path, old_urls: List[str]) -> None:
+    done = [(d[1], d[2]) for d in dl_manager.get_done_futures() if d[0]]
+    finished_url = old_urls + [u for u, f in done]
+
+    write_urls(path, finished_url)
 
 
 @relogin
@@ -88,7 +97,17 @@ def main(client: MoodleClient, args):
 
     count = 0
     start = time.time()
+
+    if args.interface is None:
+        net_inter = net_interfaces()
+        network_interface = print_pick_results_table([[e] for e in net_inter], False, False)
+        interface = net_inter[network_interface[1]]
+    else:
+        interface = args.interface
+    download_speed = args.speed or float(input('Download Speed in Mbit/s: '))
+
     for c in list(courses):
+        print('Starting with Course: ' + c.parse_name())
         count += 1
         cur_dir = path / (c.parse_name())
         try:
@@ -96,18 +115,19 @@ def main(client: MoodleClient, args):
         except (FileNotFoundError, OSError):
             pass
 
-        valuations = client.single_valuation(c)
-        if args.exams:
-            all_links = valuations
-            new_urls, old_urls = get_all_downloads(path, all_links)
-            new_urls = all_links
-        else:
-            all_links = c.course_page.to_course_data().links + valuations
-            new_urls, old_urls = get_all_downloads(path, all_links)
+        valuations = [v.url for v in client.single_valuation(c)]
 
-        dm = DownloadManager(new_urls, client, path=cur_dir)
-        dm.download()
+        all_links = c.course_page.to_course_data().links + valuations
+        new_urls, old_urls = get_all_downloads(path, all_links)
 
+        dm = DownloadManager(new_urls, client, path=cur_dir, download_speed=download_speed, net_interface=interface)
+        atexit.register(handle_exit, dm, path, old_urls)
+        try:
+            dm.download()
+        except KeyboardInterrupt:
+            return 0
+
+        atexit.unregister(handle_exit)
         finished_url = old_urls + [u for u, f in dm.done]
 
         write_urls(path, finished_url)

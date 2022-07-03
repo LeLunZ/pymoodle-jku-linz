@@ -1,7 +1,7 @@
 import time
 from argparse import Namespace
 
-from pymoodle_jku.classes.course import Course, parse_course_name
+from pymoodle_jku.classes.course import parse_course_name
 from pymoodle_jku.client.client import MoodleClient
 from pymoodle_jku.utils.login import relogin
 from pymoodle_jku.utils.printing import print_pick_results_table, clean_screen, print_array_results_table
@@ -80,8 +80,9 @@ def main(client: MoodleClient, args: Namespace):
             evaluations = client.single_valuation(course)
             clean_screen()
             if len(evaluations) == 0:
+                input(f"\nNo evaluations for {course.fullname}\nPress [Enter] to continue")
                 continue
             print(course.fullname)
             print_array_results_table([(f'{e.name}', f'{e.grade}', f'{e.grade_range}') for e in evaluations],
                                       ['Name', 'Points', 'Range'])
-            enter_press = input('\nPress Enter to continue')
+            enter_press = input('\nPress [Enter] to continue')
