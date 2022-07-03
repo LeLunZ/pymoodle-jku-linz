@@ -29,7 +29,7 @@ setup(
     author='LeLunZ',
     author_email='l.accounts+pypi@pm.me',
     url='https://github.com/LeLunZ/pymoodle-jku-linz',
-    download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/pymoodle-jku-1.1.5.tar.gz',
+    download_url='https://github.com/LeLunZ/pymoodle-jku-linz/archive/pymoodle-jku-1.2.0.tar.gz',
     keywords=['moodle', 'jku', 'linz', 'jku linz'],
     install_requires=requirements,
     python_requires='>=3.9',

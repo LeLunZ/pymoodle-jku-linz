@@ -131,7 +131,7 @@ that the next releases won't introduce bugs.
 
 - argcomplete: Is for commandline auto completion.
 - cryptography: To encrypt cookies/session key with the users password.
-- html2markdown: Converts HTML from Moodle to Markdown
+- antimarkdown: Converts HTML from Moodle to Markdown
 - [keyring](https://pypi.org/project/keyring/): Saves your password secure locally. (on windows called Credential
   Locker)
 - io-uuid: One of my own packages. Is for creating unique filenames.
@@ -142,6 +142,7 @@ that the next releases won't introduce bugs.
 - urllib3: for parsing urls and so stuff.
 - requests: for sending requests
 - requests-futures: A Wrapper around future to send asynchrones requests.
+- psutil: For getting the network download transfers to check if we should download more.
 
 ## Unsupported
 
