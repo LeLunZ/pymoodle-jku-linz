@@ -21,7 +21,7 @@ setup(
     name='pymoodle-jku',
     long_description_content_type='text/markdown',
     long_description=long_description,
-    version='1.1.5',
+    version='1.2.0',
     packages=['pymoodle_jku', 'pymoodle_jku.classes', 'pymoodle_jku.client', 'pymoodle_jku.utils',
               'pymoodle_jku.scripts'],
     license='BSD 3-Clause',
