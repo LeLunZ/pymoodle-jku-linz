@@ -82,12 +82,6 @@ this: `pymoodle download -s Logic -s Daten`
 To download stuff from old courses specify the `-o` option, else only running/current courses will be considered. In
 interactive mode you can press *M* or *m* to load old/more courses.
 
-**Only for people who used PyMoodle before**
-
-It seems like, Pymoodle had some problems. Thus a lot of not downloaded urls got written to 'urls.txt'. Just delete the
-file if you want to try a redownload. Or if you only want to redownload the exams/quizes call:
-`pymoodle download -e -o`
-
 ### Grades
 
 ![grades](https://user-images.githubusercontent.com/31982496/110263795-059fc980-7fb8-11eb-8724-4ded9c08ca09.mp4)
